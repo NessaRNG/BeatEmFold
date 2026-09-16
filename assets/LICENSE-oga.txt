@@ -1,0 +1,12 @@
+Beat 'Em Fold menggunakan aset pihak ketiga berikut (semuanya CC0, bebas dipakai tanpa atribusi):
+
+1. Kenney (kenney.nl) - https://creativecommons.org/publicdomain/zero/1.0/
+   - Playing Cards Pack (face kartu)
+   - Impact Sounds, Interface Sounds, Casino Audio (SFX)
+   Lihat: assets/LICENSE-kenney.txt
+
+2. Chewbatrij - "Beat em Up Graphics Pack" - https://opengameart.org/content/beat-em-up-graphics-pack
+   Lisensi: CC0 (http://creativecommons.org/publicdomain/zero/1.0/)
+   Dipakai: queen.png (player), fistbot.png (musuh), hitspark.png,
+   queen_shadow/fistbot_shadow.png, stage_bg.png + stage_fg.png.
+   Terima kasih Chewbatrij!
