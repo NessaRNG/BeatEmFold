@@ -8,7 +8,6 @@ const PlayerS = preload("res://scripts/player.gd")
 const DummyS = preload("res://scripts/dummy.gd")
 const CombatS = preload("res://scripts/combat_manager.gd")
 const RunS = preload("res://scripts/run_manager.gd")
-const JokerS = preload("res://scripts/joker_manager.gd")
 const WaveS = preload("res://scripts/wave_manager.gd")
 
 var got_dmg := 0
@@ -41,20 +40,17 @@ func _init() -> void:
 	root.add_child(hm)
 	var run = RunS.new()
 	root.add_child(run)
-	var jok = JokerS.new()
-	root.add_child(jok)
 	var cm = CombatS.new()
 	cm.player = player
 	cm.hand_manager = hm
 	cm.run_manager = run
-	cm.jokers = jok
 	root.add_child(cm)
 	cm.cash_in_resolved.connect(_on_res)
 	await process_frame
 	await process_frame
 	player.facing = 1
 
-	print("=== CASH-IN DAMAGE (planet 0, no joker) ===")
+	print("=== CASH-IN DAMAGE (flat) ===")
 	_cash(hm, run, cm, [_c(5, 2), _c(5, 3)], "pair 5 clubs")
 	_cash(hm, run, cm, [_c(7, 1), _c(7, 2)], "pair 7 spades")
 	_cash(hm, run, cm, [_c(13, 1), _c(13, 3)], "pair K spades")
@@ -64,16 +60,12 @@ func _init() -> void:
 	_cash(hm, run, cm, [_c(5, 2), _c(6, 3), _c(7, 1), _c(8, 2), _c(9, 0)], "straight")
 	_cash(hm, run, cm, [_c(14, 0), _c(13, 0), _c(9, 0), _c(7, 0), _c(5, 0)], "flush hearts")
 	_cash(hm, run, cm, [_c(13, 1), _c(13, 2), _c(13, 3), _c(9, 1), _c(9, 0)], "full house")
-	print("=== PLANET PAIR LV2 ===")
-	run.upgrade_planet(1)
-	run.upgrade_planet(1)
-	_cash(hm, run, cm, [_c(7, 1), _c(7, 2)], "pair 7 planet2")
 	print("=== PROYEKSI ===")
 	print("jab DPS: 19 dmg / ~1.0s = ~19 (striker 30HP = ~2 kombo)")
 	print("wave0 HP total: 80 | wave1: 170 | boss: 150")
 	print("striker DPS ke player diam: 8 dmg / ~1.0s siklus (token 1)")
 	print("brute burst 12, fury 6x2, slammer slam 10/2.5s, boss slam 15/3s")
-	print("heal hearts pair = mult (2-4) vs incoming elite ~20-40/wave")
+	print("heal hearts = 8 flat vs incoming elite ~20-40/wave")
 	print("ekonomi loop0: wave0 $13 + elite $22 + boss $20 = $55")
 	quit(0)
 

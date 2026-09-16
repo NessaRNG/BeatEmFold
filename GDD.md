@@ -45,18 +45,18 @@ Cash-In konsumsi kartu dipilih saja. Kasih i-frame 0.3 detik + magnet musuh keci
 - Kena hit: hilang HP saja, kartu di tangan TIDAK reset/hancur
 - Musuh striker: dekati -> windup kuning 0.6s -> pukul 8. Max 1 penyerang (token), sisanya tahan jarak + strafe. Boss ikut ngejar pelan (60).
 
-## 5. Suit System (saat Cash-In)
-- Hearts: Heal / lifesteal (skala dengan rank kombo)
-- Spades: damage mentah + armor pierce
-- Clubs: stun / knockback masif
-- Diamonds: shield sementara / gandakan drop uang
+## 5. Suit System simpel (saat Cash-In)
+- Hearts: heal flat 8
+- Spades: damage x1.5 jika dominan
+- Clubs: stun 0.6s + heavy
+- Diamonds: shield 1.5s
 
-## 6. Sistem Balatro (diadopsi sebagian)
-- Damage = Chips x Mult (bukan flat)
-- Joker = equipment pasif, target 12-15 buah dulu (contoh: +Mult saat HP rendah, Spade +Chips, retrigger Pair, discard = shield)
-- Hand/Discard per wave: misal 4 Hand + 3 Discard per wave. Jab gratis damage kecil buat stall.
-- Struktur run: Fight (Small Blind) -> Shop -> Elite (Large Blind) -> Shop -> Boss (debuff ala Boss Blind, cth: Hati di-debuff, Straight disabled)
-- Shop: beli Joker / upgrade level hand (Planet) / tambah-hapus kartu. Deck run: 20-25 kartu build sendiri, bukan 52 random.
+## 6. Sistem simpel (tanpa Balatro)
+- Damage flat per rank: High 10, Pair 25, Two Pair 40, Three 60, Straight 80, Flush 90, Full House 120, Four 150, SF 200. Seal boss = 15 flat.
+- Tanpa Joker, tanpa Planet, tanpa Chips x Mult.
+- Hand/Discard per wave: 4 Cash + 3 Discard. Jab gratis buat stall.
+- Struktur run: Fight -> Shop -> Elite -> Shop -> Boss (seal rotasi Straight/Flush/Pair).
+- Shop: tambah-hapus kartu saja. Deck run: 20-25 kartu build sendiri, bukan 52 random.
 
 ## 7. UI
 - HP di kiri/kanan atas standar

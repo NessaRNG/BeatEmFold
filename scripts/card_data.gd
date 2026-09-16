@@ -82,7 +82,8 @@ func face_path() -> String:
 	return "res://assets/cards/card_%s_%s.png" % [suit_name(suit).to_lower(), r]
 
 
-## Nilai chips dasar ala Balatro (dipakai Step 3 scoring).
+## Nilai rank untuk referensi (tidak dipakai damage flat).
+## Dibiarkan agar Deck/shop lama kompatibel.
 func base_chips() -> int:
 	match rank:
 		11, 12, 13:

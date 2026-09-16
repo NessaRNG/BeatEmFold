@@ -23,11 +23,13 @@ func _init() -> void:
 	check(p.has_animation("walk") and p.get_frame_count("walk") == 2, "Player walk 2 frame")
 	check(p.has_animation("jab") and p.has_animation("hook") and p.has_animation("upper"), "Player jab/hook/upper")
 	var looks_ok := true
-	for look in ["striker", "dasher", "fury", "slammer", "brute", "boss"]:
+	for look in ["striker", "dasher", "fury", "slammer", "brute", "boss",
+		"punk", "runner", "enforcer", "berserker", "wrecker", "kingpin",
+		"razor", "volt", "titan", "ravager", "demolisher", "don"]:
 		var f = Thugs.frames(look)
 		if not (f.has_animation("idle") and f.has_animation("walk") and f.has_animation("jab")):
 			looks_ok = false
-	check(looks_ok, "6 look musuh lengkap")
+	check(looks_ok, "18 look musuh lengkap")
 	check(Thugs.frames("fury") == Thugs.frames("fury"), "Cache dipakai ulang")
 
 	# --- Player sprite + anim state ---

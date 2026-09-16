@@ -1,7 +1,7 @@
 class_name RunManager
 extends Node
-## State run ala Balatro: uang, jatah Cash-In (Hands) + Discard per wave,
-## level Planet per tipe hand. Reset tiap wave baru.
+## State run simpel: uang, jatah Cash-In + Discard per wave.
+## Reset tiap wave baru.
 
 signal changed
 
@@ -13,7 +13,6 @@ const BOSS_MONEY := 20
 var money := 0
 var hands_left := HANDS_PER_WAVE
 var discards_left := DISCARDS_PER_WAVE
-var hand_levels := {} # hand_type(int) -> level(int)
 var wave_index := 0
 ## Skor endless + terbaik (tersimpan user://).
 var score := 0
@@ -64,15 +63,6 @@ func spend(n: int) -> bool:
 	money -= n
 	changed.emit()
 	return true
-
-
-func planet_level(hand_type: int) -> int:
-	return int(hand_levels.get(hand_type, 0))
-
-
-func upgrade_planet(hand_type: int) -> void:
-	hand_levels[hand_type] = planet_level(hand_type) + 1
-	changed.emit()
 
 
 func add_score(n: int) -> void:

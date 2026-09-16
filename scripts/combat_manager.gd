@@ -1,9 +1,9 @@
 class_name CombatManager
 extends Node
-## Resolve Cash-In real-time (DECISIONS arsitektur: ... -> CombatManager -> ...).
-## Bentuk AoE by rank (GDD #4B): Pair/single-lock, Two Pair/double,
+## Resolve Cash-In real-time.
+## Bentuk AoE by rank: Pair/single-lock, Two Pair/double,
 ## Three-Four/cone 90°, Straight/piercing line, Flush-FullHouse-SF/360°.
-## Damage = Chips x Mult + suit bonus (GDD #5-6), i-frame 0.3s + magnet kecil.
+## Damage flat per rank + suit simpel, i-frame 0.3s + magnet kecil.
 
 signal cash_in_resolved(hand_name: String, damage: int, targets_hit: int)
 signal cash_in_failed(reason: String)
@@ -12,23 +12,26 @@ const CASH_IN_IFRAME := 0.3
 const MAGNET_RANGE := 300.0
 const MAGNET_PULL := 40.0
 
-# Base ala Balatro: {HandType: [chips, mult]}
+# Damage flat per rank poker (tanpa Chips x Mult, tanpa Planet/Joker).
 const TABLE := {
-	0: [5, 1], # HIGH CARD
-	1: [10, 2], # PAIR
-	2: [20, 2], # TWO PAIR
-	3: [30, 3], # THREE
-	4: [30, 4], # STRAIGHT
-	5: [35, 4], # FLUSH
-	6: [40, 4], # FULL HOUSE
-	7: [60, 7], # FOUR
-	8: [100, 8], # STRAIGHT FLUSH
+	0: 10, # HIGH CARD
+	1: 25, # PAIR
+	2: 40, # TWO PAIR
+	3: 60, # THREE
+	4: 80, # STRAIGHT
+	5: 90, # FLUSH
+	6: 120, # FULL HOUSE
+	7: 150, # FOUR
+	8: 200, # STRAIGHT FLUSH
 }
+
+const SEALED_DAMAGE := 15
+const HEARTS_HEAL := 8
+const SPADES_MULT := 1.5
 
 var player: Player
 var hand_manager: HandManager
 var run_manager: RunManager
-var jokers: JokerManager
 ## Tipe hand yang di-seal boss (mis. STRAIGHT). -1 = tidak ada.
 var sealed_hand := -1
 
@@ -53,33 +56,14 @@ func try_cash_in() -> void:
 	var scoring: Array = res["cards"]
 	var sealed := sealed_hand >= 0 and hand_type == sealed_hand
 	var hand_name: String = res["name"]
-	var base: Array = TABLE[hand_type]
-	var card_chips := 0
-	for c in scoring:
-		card_chips += c.base_chips()
-	var level := 0
-	if run_manager != null:
-		level = run_manager.planet_level(hand_type)
-	var mult: int = base[1] + int(ceil(level / 2.0))
-	var chips: int = base[0] + level * 8 + card_chips
+	var damage: int = TABLE[hand_type]
 	var suit := _dominant_suit(scoring)
-	var spades := 0
-	for c in scoring:
-		if c.suit == CardData.SPADES:
-			spades += 1
-	if jokers != null:
-		mult += jokers.mult_bonus(player)
-		chips += jokers.chips_bonus(suit)
-	var damage := int(chips * mult)
-	if suit == CardData.SPADES and spades >= 2:
-		damage = int(damage * (1.5 if spades >= 3 else 1.25))
+	if not sealed and suit == CardData.SPADES:
+		damage = int(damage * SPADES_MULT)
 	if sealed:
-		# Boss Blind: hand di-seal jadi High Card dari semua kartu dipakai.
+		# Boss seal: hand di-seal jadi damage flat kecil, tanpa suit bonus.
 		hand_name = "%s SEALED!" % res["name"]
-		var used_chips := 0
-		for c in used:
-			used_chips += c.base_chips()
-		damage = 5 + used_chips
+		damage = SEALED_DAMAGE
 		scoring = used
 
 	var targets := _collect_targets(hand_type)
@@ -96,7 +80,7 @@ func try_cash_in() -> void:
 	if not sealed:
 		match suit:
 			CardData.HEARTS:
-				player.heal(maxi(1, int(damage / 8.0))) # lifesteal: jackpot heal besar
+				player.heal(HEARTS_HEAL)
 			CardData.DIAMONDS:
 				player.grant_shield(1.5)
 	player.invuln_timer = maxf(player.invuln_timer, CASH_IN_IFRAME)

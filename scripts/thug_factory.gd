@@ -108,6 +108,110 @@ static func _palette(look: String) -> Dictionary:
 			p["pants"] = Color("1a1a20")
 			p["chain"] = true
 			p["style"] = "suit"
+		# --- T1 ROOFTOP ---
+		"punk":
+			p["skin"] = Color("d9a06f")
+			p["hair"] = Color("141414")
+			p["hairstyle"] = "mohawk"
+			p["top"] = Color("b3541e")
+			p["top_dark"] = Color("7a3a14")
+			p["pants"] = Color("2a2a30")
+			p["style"] = "jacket"
+		"runner":
+			p["skin"] = Color("c98d5f")
+			p["hairstyle"] = "cap"
+			p["accent"] = Color("e8a020")
+			p["top"] = Color("3a6e8f")
+			p["top_dark"] = Color("274a61")
+			p["pants"] = Color("1f2430")
+			p["style"] = "hoodie"
+		"enforcer":
+			p["skin"] = Color("9c6b43")
+			p["hairstyle"] = "bandana"
+			p["accent"] = Color("7a1e1e")
+			p["top"] = Color("5a3a24")
+			p["top_dark"] = Color("3c2517")
+			p["pants"] = Color("1f1f24")
+			p["style"] = "jacket"
+		"berserker":
+			p["skin"] = Color("e8b08a")
+			p["hair"] = Color("ff6b1a")
+			p["hairstyle"] = "mohawk"
+			p["top"] = Color("8f2a2a")
+			p["top_dark"] = Color("611d1d")
+			p["pants"] = Color("3a3226")
+			p["style"] = "tank"
+		"wrecker":
+			p["skin"] = Color("b57e52")
+			p["hairstyle"] = "shades"
+			p["top"] = Color("3a5a8f")
+			p["top_dark"] = Color("283e63")
+			p["shirt"] = Color("dddddd")
+			p["pants"] = Color("23232e")
+			p["style"] = "vest"
+		"kingpin":
+			p["skin"] = Color("d9a06f")
+			p["hairstyle"] = "shades"
+			p["top"] = Color("2b3a6e")
+			p["top_dark"] = Color("1c2649")
+			p["shirt"] = Color("f2f2f2")
+			p["accent"] = Color("ffd94d")
+			p["pants"] = Color("1a1a20")
+			p["chain"] = true
+			p["style"] = "suit"
+		# --- T2 CLUB ---
+		"razor":
+			p["skin"] = Color("c48a5f")
+			p["hair"] = Color("e8e8e8")
+			p["hairstyle"] = "mohawk"
+			p["top"] = Color("3a2b5a")
+			p["top_dark"] = Color("251b3a")
+			p["pants"] = Color("14141c")
+			p["chain"] = true
+			p["style"] = "jacket"
+		"volt":
+			p["skin"] = Color("d9a06f")
+			p["hairstyle"] = "cap"
+			p["accent"] = Color("5affd2")
+			p["top"] = Color("1e5a8f")
+			p["top_dark"] = Color("143c61")
+			p["pants"] = Color("101018")
+			p["style"] = "hoodie"
+		"titan":
+			p["skin"] = Color("8f5f3a")
+			p["hairstyle"] = "bandana"
+			p["accent"] = Color("141414")
+			p["top"] = Color("6e2434")
+			p["top_dark"] = Color("4a1823")
+			p["pants"] = Color("14141a")
+			p["style"] = "jacket"
+		"ravager":
+			p["skin"] = Color("e8b08a")
+			p["hair"] = Color("8f3fe0")
+			p["hairstyle"] = "mohawk"
+			p["top"] = Color("1e1e24")
+			p["top_dark"] = Color("101014")
+			p["pants"] = Color("2e2438")
+			p["style"] = "tank"
+		"demolisher":
+			p["skin"] = Color("a06b42")
+			p["hairstyle"] = "shades"
+			p["top"] = Color("24402e")
+			p["top_dark"] = Color("182b1f")
+			p["shirt"] = Color("cccccc")
+			p["pants"] = Color("1a1a20")
+			p["chain"] = true
+			p["style"] = "vest"
+		"don":
+			p["skin"] = Color("d9a06f")
+			p["hairstyle"] = "shades"
+			p["top"] = Color("101014")
+			p["top_dark"] = Color("08080c")
+			p["shirt"] = Color("f2f2f2")
+			p["accent"] = Color("e03131")
+			p["pants"] = Color("1a1a20")
+			p["chain"] = true
+			p["style"] = "suit"
 	return p
 
 

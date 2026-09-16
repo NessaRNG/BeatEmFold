@@ -69,7 +69,7 @@ func _init() -> void:
 	cm.cash_in_failed.connect(_on_failed)
 	await process_frame
 
-	# --- 1. Pair clubs: single lock depan, dmg, sisa stay, i-frame ---
+	# --- 1. Pair clubs: single lock depan, dmg flat, sisa stay, i-frame ---
 	player.facing = 1
 	player.hp = 100
 	player.invuln_timer = 0.0
@@ -77,37 +77,37 @@ func _init() -> void:
 	hm.selected_cards.assign([hm.hand[0], hm.hand[1]])
 	last_name = ""
 	cm.try_cash_in()
-	# (10+5+5)x2 = 40, clubs = stagger, bukan spades = tanpa x1.5
+	# Pair flat 25, clubs = stagger, bukan spades = tanpa x1.5
 	check(last_name == "PAIR", "Cash-In Pair resolved (dapat %s)" % last_name)
-	check(last_dmg == 40, "Pair 5-5 clubs = 40 dmg (dapat %d)" % last_dmg)
+	check(last_dmg == 25, "Pair flat = 25 dmg (dapat %d)" % last_dmg)
 	check(last_n == 1, "Pair single-lock 1 target (dapat %d)" % last_n)
-	check(dummy_a.hp == 160, "Dummy depan kena 40 (hp %d)" % dummy_a.hp)
+	check(dummy_a.hp == 175, "Dummy depan kena 25 (hp %d)" % dummy_a.hp)
 	check(dummy_b.hp == 200 and dummy_c.hp == 200, "Target lain aman")
 	check(hm.hand.size() == 2, "Hanya yang dipakai kebuang, sisa stay (%d)" % hm.hand.size())
 	check(player.invuln_timer >= 0.29, "i-frame 0.3s cash-in")
 	check(dummy_a.stagger_timer >= 0.5, "Clubs = stun masif")
 
-	# --- 2. Spades x1.5, tie-break suit pertama ---
+	# --- 2. Spades x1.5 simpel ---
 	dummy_a.hp = 200
 	hm.hand.assign([_c(5, 1), _c(5, 0), _c(13, 1)])
 	hm.selected_cards.assign([hm.hand[0], hm.hand[1]])
 	cm.try_cash_in()
-	check(last_dmg == 40, "Pair 1 spade = tanpa bonus (dapat %d)" % last_dmg)
-	check(dummy_a.hp == 160, "Dummy kena 40 (hp %d)" % dummy_a.hp)
-	# Two pair 2 spades -> x1.25: (20+32)x2=104 -> 130.
+	check(last_dmg == 37, "Pair spades dominan = 25x1.5=37 (dapat %d)" % last_dmg)
+	check(dummy_a.hp == 163, "Dummy kena 37 (hp %d)" % dummy_a.hp)
+	# Two pair spades dominan -> 40x1.5=60.
 	dummy_a.hp = 200
 	hm.hand.assign([_c(7, 1), _c(7, 2), _c(9, 1), _c(9, 3)])
 	hm.selected_cards.assign(hm.hand.duplicate())
 	cm.try_cash_in()
-	check(last_dmg == 130, "Two pair 2 spades = x1.25 = 130 (dapat %d)" % last_dmg)
+	check(last_dmg == 60, "Two pair spades = 60 (dapat %d)" % last_dmg)
 
-	# --- 3. Hearts heal ---
+	# --- 3. Hearts heal flat ---
 	player.hp = 80
 	hm.hand.assign([_c(7, 0), _c(7, 2), _c(13, 1)])
 	hm.selected_cards.assign([hm.hand[0], hm.hand[1]])
 	cm.try_cash_in()
-	check(last_dmg == 48, "Pair 7-7 hearts = (10+14)x2 = 48 (dapat %d)" % last_dmg)
-	check(player.hp == 86, "Lifesteal 48/8 = 6 (80 -> %d)" % player.hp)
+	check(last_dmg == 25, "Pair hearts flat 25 (dapat %d)" % last_dmg)
+	check(player.hp == 88, "Heal flat +8 (80 -> %d)" % player.hp)
 
 	# --- 4. Diamonds shield ---
 	player.invuln_timer = 0.0
@@ -126,9 +126,9 @@ func _init() -> void:
 	hm.hand.assign([_c(14, 0), _c(13, 0), _c(9, 0), _c(7, 0), _c(5, 0), _c(2, 2)])
 	hm.selected_cards.assign([hm.hand[0], hm.hand[1], hm.hand[2], hm.hand[3], hm.hand[4]])
 	cm.try_cash_in()
-	# (35+11+10+9+7+5)x4 = 308, hearts -> heal 4
+	# Flush flat 90, hearts -> heal 8
 	check(last_name == "FLUSH" and last_n == 3, "Flush 360 kena 3 target (%s x%d)" % [last_name, last_n])
-	check(dummy_a.hp <= 0 and dummy_c.hp <= 0, "Depan + belakang mati kena flush")
+	check(dummy_a.hp == 110 and dummy_c.hp == 110, "Depan + belakang kena 90 (hp %d/%d)" % [dummy_a.hp, dummy_c.hp])
 	check(hm.hand.size() == 1, "Flush makan 5, sisa 1 (%d)" % hm.hand.size())
 
 	# --- 6. Auto best-hand tanpa seleksi ---
@@ -142,7 +142,7 @@ func _init() -> void:
 	hm.hand.assign([_c(7, 1), _c(7, 2), _c(13, 1), _c(12, 3)])
 	hm.selected_cards.clear()
 	cm.try_cash_in()
-	check(last_name == "PAIR" and last_dmg == 48, "Auto = pair 7 (1 spade, tanpa bonus) 48 (%s %d)" % [last_name, last_dmg])
+	check(last_name == "PAIR" and last_dmg == 37, "Auto = pair 7 spades 37 (%s %d)" % [last_name, last_dmg])
 	check(hm.hand.size() == 2, "Auto makan 2, sisa K Q (%d)" % hm.hand.size())
 
 	# --- 7. Two Pair = double lock, belakang aman ---
@@ -152,9 +152,9 @@ func _init() -> void:
 	hm.hand.assign([_c(7, 1), _c(7, 2), _c(9, 1), _c(9, 3), _c(13, 1)])
 	hm.selected_cards.assign([hm.hand[0], hm.hand[1], hm.hand[2], hm.hand[3]])
 	cm.try_cash_in()
-	# (20+7+7+9+9)x2 = 104, spades 2x -> x1.25 = 130
+	# Two pair flat 40 x1.5 spades = 60
 	check(last_name == "TWO PAIR" and last_n == 2, "Two Pair double-lock (%s x%d)" % [last_name, last_n])
-	check(dummy_a.hp == 70 and dummy_b.hp == 70, "2 depan kena 130 (hp %d/%d)" % [dummy_a.hp, dummy_b.hp])
+	check(dummy_a.hp == 140 and dummy_b.hp == 140, "2 depan kena 60 (hp %d/%d)" % [dummy_a.hp, dummy_b.hp])
 	check(dummy_c.hp == 200, "Belakang aman dari double-lock")
 
 	# --- 8. Straight = garis: jauh kena, belakang aman ---

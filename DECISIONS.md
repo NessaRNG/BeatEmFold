@@ -100,9 +100,22 @@ Tanggal update: 2026-09-15
 ## Post-MVP 14: Overlay bocor (2026-09-16)
 38. menu_dim (82% gelap) ketinggalan nyala saat MULAI (flow ask tidak sembunyikan) -> seluruh game gelap. Fix: _press_mulai sembunyikan semua node menu. Audit: pause/shop/over buka-tutup sendiri, aman.
 
+## Simplifikasi: Balatro dibuang (2026-09-16)
+50. Damage flat per rank (High 10, Pair 25, Two Pair 40, Three 60, Straight 80, Flush 90, Full House 120, Four 150, SF 200). Seal = 15 flat. Spades dominan x1.5, Hearts heal 8, Clubs stun, Diamonds shield. Tanpa Chips x Mult, Planet, Joker. Shop 2 opsi (tambah/hapus kartu). File joker_* orphan, tidak dipakai game.
+
+## Skala agresi per loop (2026-09-16)
+51. Loop 0 = base. Per loop: windup x(1-0.12*loop) min 0.65x (floor 0.28s), speed +15*loop, recover -0.06 min 0.22s, hold 220->140, slam x(1-0.1*loop) min 0.7x, fury gap -0.02 min 0.18s. Token tetap 1->3. Terpusat di start_wave, base _entries tidak berubah.
+
+## 3 stage (2026-09-16)
+52. StageBg: 0 ALLEY gang ungu, 1 ROOFTOP senja oranye + toren/AC/pagar, 2 BAR interior kayu + rak botol + lampu panggung. Awet per 5 boss (15 wave) di _start_wave: block=loop/5, theme=block%3. AlleyBg lama orphan.
+
+## Tier mob per stage (2026-09-16)
+53. Tier=loop/5%3 sinkron stage. T0 base utuh (test aman). T1: PUNK/RUNNER/ENFORCER/BERSERKER/WRECKER/KINGPIN +2 dmg +10 speed +spr0.1 +uang1. T2: RAZOR/VOLT/TITAN/RAVAGER (3-hit)/DEMOLISHER/DON +4 dmg +20 speed +spr0.2 +slam+20. Banner per tier.
+54. Sprite beda per tier: 12 palet baru di ThugFactory (mohawk/cap/bandana/shades x jacket/hoodie/tank/vest/suit + warna stage). _apply_tier ganti look, bukan cuma nama/tint. StageBg alley sediakan node Neon+Lamp (kompatibel test).
+
 ## Ditolak / Ditunda
 - Double-tap dash: ditolak, tidak responsif saat dikepung.
 - Basic attack random (2-5=jab, J/Q/K=heavy): ditolak, hancurkan game feel.
 - Full 52 kartu random: ditolak untuk MVP.
-- 150 Joker ala Balatro: ditunda, mulai 12-15.
+- Joker + Planet + Chips x Mult: dibuang total (request simpel).
 - Screen-nuke Royal Flush sinematik: ditunda sampai prototype fun.

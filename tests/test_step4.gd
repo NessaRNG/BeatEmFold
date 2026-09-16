@@ -8,9 +8,7 @@ const PlayerS = preload("res://scripts/player.gd")
 const DummyS = preload("res://scripts/dummy.gd")
 const CombatS = preload("res://scripts/combat_manager.gd")
 const RunS = preload("res://scripts/run_manager.gd")
-const JokerS = preload("res://scripts/joker_manager.gd")
 const WaveS = preload("res://scripts/wave_manager.gd")
-const JokerD = preload("res://scripts/joker_data.gd")
 const ShopS = preload("res://scripts/shop_ui.gd")
 
 var failures = 0
@@ -81,13 +79,10 @@ func _init() -> void:
 	root.add_child(dummy)
 	var hm = Hands.new()
 	root.add_child(hm)
-	var jok = JokerS.new()
-	root.add_child(jok)
 	var cm = CombatS.new()
 	cm.player = player
 	cm.hand_manager = hm
 	cm.run_manager = run
-	cm.jokers = jok
 	root.add_child(cm)
 	await process_frame
 	await process_frame
@@ -105,50 +100,29 @@ func _init() -> void:
 	cm.try_cash_in()
 	check(fail_msg != "" and hm.hand.size() == 3, "Cash ke-5 ditolak, kartu aman")
 
-	# --- Planet + Bloodlust ---
-	run.reset_for_wave(0)
-	run.upgrade_planet(1) # Pair Lv1: +8 chips +1 mult
-	hm.hand.assign([_c(5, 2), _c(5, 3), _c(13, 1)])
-	hm.selected_cards.assign([hm.hand[0], hm.hand[1]])
-	cm.try_cash_in()
-	# (10+8 +5+5)x(2+1) = 84
-	check(got_dmg == 84, "Planet Pair Lv1: 84 dmg (dapat %d)" % got_dmg)
-	player.hp = 40 # <50%: bloodlust belum dibeli
+	# --- Flat damage + suit simpel ---
 	run.reset_for_wave(0)
 	hm.hand.assign([_c(5, 2), _c(5, 3), _c(13, 1)])
 	hm.selected_cards.assign([hm.hand[0], hm.hand[1]])
 	cm.try_cash_in()
-	check(got_dmg == 84, "Tanpa joker tetap 84 (dapat %d)" % got_dmg)
+	check(got_dmg == 25, "Pair flat 25 (dapat %d)" % got_dmg)
+	player.hp = 80
+	run.reset_for_wave(0)
+	hm.hand.assign([_c(7, 0), _c(7, 2), _c(13, 1)])
+	hm.selected_cards.assign([hm.hand[0], hm.hand[1]])
+	cm.try_cash_in()
+	check(got_dmg == 25 and player.hp == 88, "Hearts heal +8 (dmg %d hp %d)" % [got_dmg, player.hp])
 
-	# --- Straight sealed (Boss Blind) ---
+	# --- Straight sealed ---
 	cm.sealed_hand = 4 # STRAIGHT
 	run.reset_for_wave(0)
 	hm.hand.assign([_c(5, 2), _c(6, 3), _c(7, 1), _c(8, 2), _c(9, 0)])
 	hm.selected_cards.assign(hm.hand.duplicate())
 	cm.try_cash_in()
 	check(got_name == "STRAIGHT SEALED!", "Sealed downgrade (%s)" % got_name)
-	check(got_dmg == 5 + 5 + 6 + 7 + 8 + 9, "Sealed dmg flat 5+chips=%d (dapat %d)" % [40, got_dmg])
+	check(got_dmg == 15, "Sealed dmg flat 15 (dapat %d)" % got_dmg)
 	cm.sealed_hand = -1
-
-	# --- Joker: bloodlust / spade_drill / parry ---
-	for j in JokerD.starter_pool():
-		if j.id == "bloodlust":
-			jok.add(j)
-	check(jok.has("bloodlust"), "Joker bloodlust dibeli")
-	player.hp = 40
-	run.reset_for_wave(0)
-	hm.hand.assign([_c(5, 2), _c(5, 3), _c(13, 1)])
-	hm.selected_cards.assign([hm.hand[0], hm.hand[1]])
-	cm.try_cash_in()
-	# (10+8 +5+5)x(2+1 planet+2 bloodlust) = 140
-	check(got_dmg == 140, "Bloodlust HP<50%%: 140 dmg (dapat %d)" % got_dmg)
 	player.hp = 100
-	player.invuln_timer = 0.0
-	for j in JokerD.starter_pool():
-		if j.id == "parry":
-			jok.add(j)
-	jok.on_discard(player)
-	check(player.invuln_timer >= 1.0, "Parry: discard = shield 1s")
 
 	# --- WaveManager: spawn 3, clear saat habis ---
 	var wm = WaveS.new()
@@ -181,40 +155,38 @@ func _init() -> void:
 	check(player.hp == 85, "Slam 15 dmg (hp %d)" % player.hp)
 	check(boss.slam_cd >= 2.9, "Slam cooldown reset")
 
-	# --- Shop: beli joker + planet + tutup ---
+	# --- Shop simpel: tambah/hapus kartu + tutup ---
 	var shop = ShopS.new()
 	root.add_child(shop)
 	await process_frame
 	var run2 = RunS.new()
 	root.add_child(run2)
-	var jok2 = JokerS.new()
-	root.add_child(jok2)
 	var hm2 = Hands.new()
 	root.add_child(hm2)
 	await process_frame
 	hm2.deal(1) # pastikan deck kebentuk
 	run2.add_money(20)
-	shop.setup(run2, jok2, hm2.deck, hm2)
+	shop.setup(run2, hm2.deck, hm2)
 	shop.shop_closed.connect(_on_shop_closed)
-	shop.open_shop(1)
-	check(shop.open and shop.rows.size() == 6, "Shop buka 6 opsi")
-	shop.buy_index(0) # bloodlust $6
-	check(jok2.has("bloodlust") and run2.money == 14, "Beli joker $6 (sisa $%d)" % run2.money)
-	shop.buy_index(3) # planet pair $5
-	check(run2.planet_level(1) == 1 and run2.money == 9, "Beli planet $5 (sisa $%d)" % run2.money)
+	shop.open_shop()
+	check(shop.open and shop.rows.size() == 2, "Shop buka 2 opsi")
+	var deck_n: int = hm2.deck.cards.size() + hm2.hand.size()
+	shop.buy_index(0) # tambah kartu $3
+	check(run2.money == 17, "Beli tambah kartu $3 (sisa $%d)" % run2.money)
+	check(hm2.deck.cards.size() + hm2.hand.size() == deck_n + 1, "Deck +1 kartu")
 	shop_closed_fired = false
 	shop.close_shop()
 	check(shop_closed_fired and not shop.open, "Shop tutup -> lanjut")
 	check(shop.continue_button.hotkey == KEY_L, "Lanjut shortcut L")
-	# Harga loop 1 naik 25%: planet $5 -> $6.
+	# Harga loop 1 naik 25%: $3 -> $4.
 	run2.wave_index = 3
-	shop.open_shop(1)
-	var found6 := false
-	var btn3: Button = shop.rows[3]["btn"]
-	for ch in btn3.get_children():
-		if ch is Label and ch.text == "$6":
-			found6 = true
-	check(found6, "Harga loop1 +25%")
+	shop.open_shop()
+	var found4 := false
+	var btn0: Button = shop.rows[0]["btn"]
+	for ch in btn0.get_children():
+		if ch is Label and ch.text == "$4":
+			found4 = true
+	check(found4, "Harga loop1 +25%")
 	shop.close_shop()
 
 	if failures == 0:

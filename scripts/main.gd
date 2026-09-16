@@ -17,7 +17,6 @@ var hand_manager: HandManager
 var hand_ui: HandUI
 var combat_manager: CombatManager
 var run_manager: RunManager
-var jokers: JokerManager
 var wave_manager: WaveManager
 var shop_ui: ShopUI
 var tutorial: Tutorial
@@ -40,6 +39,7 @@ var flash_rect: ColorRect
 ## Node2D tidak dapat viewport rect (size 0, anchor runtuh off-screen).
 var ui_root: Control
 var hud_panel: ColorRect
+var stage_bg: Node2D
 var cash_pips: Array[ColorRect] = []
 var discard_pips: Array[ColorRect] = []
 
@@ -118,8 +118,9 @@ func _build_arena() -> void:
 	bg.position = Vector2.ZERO
 	add_child(bg)
 
-	var alley := AlleyBg.new()
-	add_child(alley)
+	var stage_script := load("res://scripts/stage_bg.gd") as GDScript
+	stage_bg = stage_script.new()
+	add_child(stage_bg)
 
 	var lane := ColorRect.new()
 	lane.color = Color(0.12, 0.11, 0.22, 0.55)
@@ -282,8 +283,6 @@ func _build_cards() -> void:
 	add_child(hand_manager)
 	run_manager = RunManager.new()
 	add_child(run_manager)
-	jokers = JokerManager.new()
-	add_child(jokers)
 	var sfx := Sfx.new()
 	add_child(sfx)
 	hand_ui = HandUI.new()
@@ -292,7 +291,7 @@ func _build_cards() -> void:
 	hand_manager.best_hand_changed.connect(hand_ui.set_best_hand)
 	hand_manager.hand_changed.connect(_on_hand_counts)
 	run_manager.changed.connect(_refresh_counters)
-	hand_manager.deal(3) # buka dengan 3 kartu, sisanya dari mukul
+	hand_manager.deal(3) # buka 3 kartu, sisa dari mukul
 
 
 func _build_combat() -> void:
@@ -300,7 +299,6 @@ func _build_combat() -> void:
 	combat_manager.player = player
 	combat_manager.hand_manager = hand_manager
 	combat_manager.run_manager = run_manager
-	combat_manager.jokers = jokers
 	add_child(combat_manager)
 	combat_manager.cash_in_resolved.connect(_on_cash_resolved)
 	combat_manager.cash_in_failed.connect(_on_cash_failed)
@@ -312,7 +310,7 @@ func _build_flow() -> void:
 	shop_ui = ShopUI.new()
 	ui_root.add_child(shop_ui)
 	run_manager.load_best()
-	shop_ui.setup(run_manager, jokers, deck, hand_manager)
+	shop_ui.setup(run_manager, deck, hand_manager)
 	wave_manager.wave_cleared.connect(_on_wave_cleared)
 	shop_ui.shop_closed.connect(_on_shop_closed)
 	tutorial = Tutorial.new()
@@ -789,6 +787,10 @@ func hitstop(time_factor: float, dur: float) -> void:
 func _start_wave(idx: int) -> void:
 	state = ST_FIGHT
 	run_manager.reset_for_wave(idx)
+	if stage_bg != null:
+		# Stage awet per 5 boss (15 wave): 0-14 alley, 15-29 rooftop, 30-44 bar.
+		var block := int(WaveManager.loop_of(idx) / 5.0)
+		stage_bg.set_theme(block % 3, block)
 	wave_manager.start_wave(idx, self)
 	for e in wave_manager.spawned:
 		e.died.connect(_on_enemy_died.bind(e))
@@ -911,10 +913,7 @@ func _open_shop() -> void:
 	mode_label.visible = false
 	Sfx.play_sfx("open", -6.0)
 	Sfx.play_sfx("shuffle", -8.0)
-	var best := last_best_type
-	if hand_manager.hand.size() < 2:
-		best = PokerEvaluator.PAIR
-	shop_ui.open_shop(best)
+	shop_ui.open_shop()
 
 
 func _on_shop_closed() -> void:
@@ -937,7 +936,7 @@ func _process(_delta: float) -> void:
 	if state == ST_MENU:
 		return
 	if state == ST_SHOP:
-		for i in range(6):
+		for i in range(2):
 			if Input.is_physical_key_pressed(KEY_1 + i) and not _num_was(i):
 				shop_ui.buy_index(i)
 		_num_track()
@@ -990,7 +989,6 @@ func _quick_discard() -> void:
 		hand_manager.remove_cards(sel)
 		hand_manager.clear_selection()
 		run_manager.use_discard()
-		jokers.on_discard(player)
 		Sfx.play_sfx("click", -10.0)
 
 
