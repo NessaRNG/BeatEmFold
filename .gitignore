@@ -1,0 +1,8 @@
+# Godot generated cache — jangan commit
+.godot/
+
+# Pack aset belum dipakai game (top-down/siang, clash gaya)
+assets/urban/
+assets/modern-city/
+assets/pixel-platformer/
+assets/pixel-industrial/
