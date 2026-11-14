@@ -22,7 +22,9 @@ var shop_ui: ShopUI
 var tutorial: Tutorial
 var player_hp_label: Label
 var hp_bar_bg: ColorRect
+var hp_bar_delay: ColorRect
 var hp_bar_fill: ColorRect
+var hp_delay_tween: Tween
 var boss_bar_bg: ColorRect
 var boss_bar_fill: ColorRect
 var seal_badge: Panel
@@ -186,6 +188,12 @@ func _build_hud() -> void:
 	hp_bar_bg.size = Vector2(280, 18)
 	hp_bar_bg.color = Color(0, 0, 0, 0.8)
 	add_child(hp_bar_bg)
+
+	hp_bar_delay = ColorRect.new()
+	hp_bar_delay.position = Vector2(76, 48)
+	hp_bar_delay.size = Vector2(280, 18)
+	hp_bar_delay.color = Color("ff5555")
+	add_child(hp_bar_delay)
 
 	hp_bar_fill = ColorRect.new()
 	hp_bar_fill.position = Vector2(76, 48)
@@ -556,7 +564,7 @@ func confirm_end() -> void:
 
 
 func _set_hud_visible(v: bool) -> void:
-	for n in [hud_panel, player_hp_label, hp_bar_bg, hp_bar_fill, wave_label,
+	for n in [hud_panel, player_hp_label, hp_bar_bg, hp_bar_delay, hp_bar_fill, wave_label,
 			combo_label, deck_label, help_label, hand_ui]:
 		if n != null:
 			n.visible = v
@@ -1079,13 +1087,23 @@ func _show_combat_text(text: String) -> void:
 func _refresh_hud(hp: int, max_hp: int) -> void:
 	player_hp_label.text = "PLAYER HP: %d/%d" % [hp, max_hp]
 	var frac := float(hp) / float(maxi(max_hp, 1))
-	hp_bar_fill.size = Vector2(280.0 * frac, 16)
+	var target_w := 280.0 * frac
+	hp_bar_fill.size = Vector2(target_w, 16)
 	if frac < 0.3:
 		hp_bar_fill.color = Color("e04040")
 	elif frac < 0.6:
 		hp_bar_fill.color = Color("e0a040")
 	else:
 		hp_bar_fill.color = Color("55d66b")
+
+	# Delay bar lerp animation ala arcade fighting games
+	if hp_bar_delay != null:
+		if hp_delay_tween != null and hp_delay_tween.is_valid():
+			hp_delay_tween.kill()
+		hp_delay_tween = create_tween()
+		hp_delay_tween.tween_interval(0.2)
+		hp_delay_tween.tween_property(hp_bar_delay, "size:x", target_w, 0.4).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
 	if hp < last_hp:
 		add_shake(0.6)
 		hitstop(0.3, 0.06)
@@ -1097,4 +1115,10 @@ func _refresh_hud(hp: int, max_hp: int) -> void:
 
 func _on_combo(stage: int) -> void:
 	var names := ["-", "JAB 1", "JAB 2", "FINISHER"]
-	combo_label.text = "JAB: %s" % names[clampi(stage, 0, 3)]
+	var colors := [Color.WHITE, Color("55d66b"), Color("ffd94d"), Color("ff5555")]
+	var idx := clampi(stage, 0, 3)
+	combo_label.text = "JAB: %s" % names[idx]
+	combo_label.modulate = colors[idx]
+	if stage > 0:
+		UiAnim.punch(combo_label, 1.25, 0.14)
+

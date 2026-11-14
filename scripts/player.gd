@@ -139,6 +139,7 @@ func _handle_dash_input() -> void:
 		dash_cooldown = DASH_COOLDOWN
 		invuln_timer = maxf(invuln_timer, IFRAME_TIME)
 		dashed.emit()
+		_spawn_dust_puff()
 		# Dash membatalkan jab (game feel responsif)
 		attack_stage = 0
 		attack_timer = 0.0
@@ -169,7 +170,51 @@ func _start_jab(index: int) -> void:
 	combo_timer = COMBO_WINDOW
 	sprite.play(PUNCH_ANIMS[index])
 	position.x = clampf(position.x + facing * 10.0, 40.0, 1240.0)
+	_spawn_slash_fx(index)
 	combo_changed.emit(attack_stage)
+
+
+func _spawn_slash_fx(index: int) -> void:
+	var tex := CharSprites.slash_tex()
+	if tex == null:
+		return
+	var s := Sprite2D.new()
+	s.texture = tex
+	s.hframes = 2
+	s.frame = 1 if index == 2 else 0 # 1=uppercut arc, 0=slash arc
+	s.flip_h = facing < 0
+	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	s.position = Vector2(facing * (28.0 if index < 2 else 16.0), -32.0 if index < 2 else -44.0)
+	s.scale = Vector2(1.3, 1.3)
+	s.modulate = Color(1.0, 0.9, 0.4, 0.9) if index == 2 else Color(0.6, 0.9, 1.0, 0.85)
+	add_child(s)
+
+	var tween := create_tween()
+	tween.tween_property(s, "scale", Vector2(1.7, 1.7), 0.12)
+	tween.parallel().tween_property(s, "modulate:a", 0.0, 0.12)
+	tween.chain().tween_callback(s.queue_free)
+
+
+func _spawn_dust_puff() -> void:
+	var tex := CharSprites.dust_tex()
+	if tex == null or get_parent() == null:
+		return
+	var s := Sprite2D.new()
+	s.texture = tex
+	s.hframes = 3
+	s.frame = 0
+	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	s.position = position + Vector2(-facing * 14.0, -4.0)
+	s.scale = Vector2(1.2, 1.2)
+	get_parent().add_child(s)
+
+	var tween := s.create_tween()
+	tween.tween_property(s, "frame", 2, 0.2)
+	tween.parallel().tween_property(s, "scale", Vector2(1.6, 1.6), 0.2)
+	tween.parallel().tween_property(s, "modulate:a", 0.0, 0.2)
+	tween.chain().tween_callback(s.queue_free)
+
+
 
 
 func _update_attack(delta: float) -> void:

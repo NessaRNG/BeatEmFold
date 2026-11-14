@@ -22,6 +22,7 @@ var cards_shown: Array = []
 var selected_shown: Array = []
 var face_cache := {}
 var back_tex: Texture2D
+var slot_tweens: Array[Tween] = []
 
 
 func _ready() -> void:
@@ -135,12 +136,17 @@ func _refresh_slots() -> void:
 				slot_panels[i].add_theme_stylebox_override("panel", sb_selected)
 			else:
 				slot_panels[i].add_theme_stylebox_override("panel", sb_full)
+			var target_y := -14.0 if selected else 0.0
+			var tween := slot_panels[i].create_tween()
+			tween.tween_property(slot_panels[i], "position:y", target_y, 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		else:
 			slot_faces[i].texture = _back()
 			slot_faces[i].modulate = Color(1, 1, 1, 0.3)
 			slot_labels[i].text = "·"
 			slot_labels[i].add_theme_color_override("font_color", Color(1, 1, 1, 0.3))
 			slot_panels[i].add_theme_stylebox_override("panel", sb_empty)
+			var tween := slot_panels[i].create_tween()
+			tween.tween_property(slot_panels[i], "position:y", 0.0, 0.15)
 
 
 func set_best_hand(hand_name: String, _hand_type: int) -> void:

@@ -327,19 +327,27 @@ func _hp_text() -> String:
 	return "%s %d/%d" % [display_name, hp, max_hp]
 
 
-## Angka damage melayang (game feel, menempel di musuh).
+## Angka damage melayang (game feel modern arcade, pop scale + arc).
 func _spawn_float(text: String, big: bool) -> void:
 	var lb := Label.new()
 	lb.text = text
-	lb.add_theme_font_size_override("font_size", 22 if big else 16)
-	lb.add_theme_color_override("font_color", Color("ffd94d") if big else Color.WHITE)
+	lb.add_theme_font_size_override("font_size", 24 if big else 18)
+	lb.add_theme_color_override("font_color", Color("ffe066") if big else Color.WHITE)
 	lb.position = Vector2(-24.0, -body_h - 52.0)
+	lb.pivot_offset = Vector2(16.0, 10.0)
+	lb.scale = Vector2(1.7, 1.7) if big else Vector2(1.4, 1.4)
+	var rot_drift := randf_range(-0.15, 0.15)
+	lb.rotation = rot_drift
 	add_child(lb)
+
 	var tween := create_tween()
 	tween.set_parallel(true)
-	tween.tween_property(lb, "position:y", lb.position.y - 36.0, 0.6)
-	tween.tween_property(lb, "modulate:a", 0.0, 0.6)
+	tween.tween_property(lb, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(lb, "position:y", lb.position.y - 42.0, 0.65).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(lb, "position:x", lb.position.x + randf_range(-10.0, 10.0), 0.65)
+	tween.tween_property(lb, "modulate:a", 0.0, 0.25).set_delay(0.4)
 	tween.chain().tween_callback(lb.queue_free)
+
 
 
 ## Semburan partikel CPU (aman di compatibility renderer).

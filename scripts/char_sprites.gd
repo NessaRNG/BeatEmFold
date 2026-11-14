@@ -61,38 +61,42 @@ static func get_frames(character_type: String = "player") -> SpriteFrames:
 		at.region = Rect2(idx * frame_w, 0, frame_w, frame_h)
 		return at
 
-	# 1. idle: frame 0 & 1
+	# 1. idle: 4 frames (0..3) fluid breathing & arm sway
 	sf.add_animation("idle")
-	sf.add_frame("idle", make_frame.call(0), 1.0)
-	sf.add_frame("idle", make_frame.call(1), 1.0)
-	sf.set_animation_speed("idle", 4.0)
+	for i in range(4):
+		sf.add_frame("idle", make_frame.call(i), 1.0)
+	sf.set_animation_speed("idle", 6.0)
 	sf.set_animation_loop("idle", true)
 
-	# 2. walk: frame 2 & 3
+	# 2. walk: 6 frames (4..9) dynamic run stride
 	sf.add_animation("walk")
-	sf.add_frame("walk", make_frame.call(2), 1.0)
-	sf.add_frame("walk", make_frame.call(3), 1.0)
-	sf.set_animation_speed("walk", 8.0)
+	for i in range(4, 10):
+		sf.add_frame("walk", make_frame.call(i), 1.0)
+	sf.set_animation_speed("walk", 12.0)
 	sf.set_animation_loop("walk", true)
 
-	# 3. jab: frame 4
+	# 3. jab: 2 frames (10..11) windup -> snap punch
 	sf.add_animation("jab")
-	sf.add_frame("jab", make_frame.call(4), 1.0)
-	sf.set_animation_speed("jab", 10.0)
+	sf.add_frame("jab", make_frame.call(10), 0.7)
+	sf.add_frame("jab", make_frame.call(11), 1.3)
+	sf.set_animation_speed("jab", 14.0)
 	sf.set_animation_loop("jab", false)
 
-	# 4. hook & upper: frame 5
+	# 4. hook: 2 frames (12..13) windup -> wide swing
 	sf.add_animation("hook")
-	sf.add_frame("hook", make_frame.call(5), 1.0)
-	sf.set_animation_speed("hook", 10.0)
+	sf.add_frame("hook", make_frame.call(12), 0.7)
+	sf.add_frame("hook", make_frame.call(13), 1.3)
+	sf.set_animation_speed("hook", 14.0)
 	sf.set_animation_loop("hook", false)
 
+	# 5. upper: 2 frames (14..15) crouch -> air launch
 	sf.add_animation("upper")
-	sf.add_frame("upper", make_frame.call(5), 1.0)
-	sf.set_animation_speed("upper", 10.0)
+	sf.add_frame("upper", make_frame.call(14), 0.7)
+	sf.add_frame("upper", make_frame.call(15), 1.3)
+	sf.set_animation_speed("upper", 14.0)
 	sf.set_animation_loop("upper", false)
 
-	# 5. hit: frame 1 (flinch/bobbing)
+	# 6. hit: frame 1 (flinch)
 	sf.add_animation("hit")
 	sf.add_frame("hit", make_frame.call(1), 1.0)
 	sf.set_animation_speed("hit", 10.0)
@@ -100,3 +104,12 @@ static func get_frames(character_type: String = "player") -> SpriteFrames:
 
 	_cache[character_type] = sf
 	return sf
+
+
+static func slash_tex() -> Texture2D:
+	return load("res://assets/sprites/slash_arc_fx.png") as Texture2D
+
+
+static func dust_tex() -> Texture2D:
+	return load("res://assets/sprites/dust_puff_fx.png") as Texture2D
+
