@@ -36,14 +36,14 @@ static func get_frames(character_type: String = "player") -> SpriteFrames:
 	if _cache.has(character_type):
 		return _cache[character_type]
 
-	var sheet_path := "res://assets/sprites/chibi_player_sheet.png"
+	var sheet_path := "res://assets/sprites/detailed_player_sheet.png"
 	match character_type:
 		"boss":
-			sheet_path = "res://assets/sprites/chibi_boss_sheet.png"
+			sheet_path = "res://assets/sprites/detailed_boss_sheet.png"
 		"enemy", "punk", "striker", "dasher", "fury", "slammer", "brute":
-			sheet_path = "res://assets/sprites/chibi_enemy_sheet.png"
+			sheet_path = "res://assets/sprites/detailed_enemy_sheet.png"
 		_:
-			sheet_path = "res://assets/sprites/chibi_player_sheet.png"
+			sheet_path = "res://assets/sprites/detailed_player_sheet.png"
 
 	var tex := load(sheet_path) as Texture2D
 	if tex == null:
@@ -51,8 +51,8 @@ static func get_frames(character_type: String = "player") -> SpriteFrames:
 		return ThugFactory.frames(character_type)
 
 	var sf := SpriteFrames.new()
-	var frame_w := 48
-	var frame_h := 48
+	var frame_w := 64
+	var frame_h := 64
 
 	# Helper untuk potong AtlasTexture per frame
 	var make_frame := func(idx: int) -> AtlasTexture:
