@@ -77,8 +77,8 @@ func _ready() -> void:
 	sprite = AnimatedSprite2D.new()
 	var chibi_sf := CharSprites.get_frames("player")
 	sprite.sprite_frames = chibi_sf if chibi_sf != null else ThugFactory.frames("player")
-	sprite.position = Vector2(0, -32)
-	sprite.scale = Vector2(1.5, 1.5)
+	sprite.position = Vector2(8, -48 * 1.25)
+	sprite.scale = Vector2(1.25, 1.25)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	sprite.play("idle")
 	add_child(sprite)
