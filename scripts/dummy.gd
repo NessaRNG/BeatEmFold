@@ -141,7 +141,7 @@ func _update_ai(delta: float) -> void:
 				ai_timer = ai_windup
 				strike_pending = strike_hits - 1
 				_flash(Color("ffe066"))
-				sprite.play("jab")
+				sprite.play(_attack_anim())
 				velocity = Vector2.ZERO
 			elif dist > want:
 				velocity = to.normalized() * ai_speed
@@ -183,6 +183,38 @@ func _release_token() -> void:
 		active_attackers = maxi(active_attackers - 1, 0)
 
 
+func _attack_anim() -> String:
+	match look:
+		"dasher", "fury":
+			return "hook"
+		"brute", "boss", "slammer":
+			return "upper"
+		_:
+			return "jab"
+
+
+func _spawn_attack_slash(anim_name: String) -> void:
+	var tex := CharSprites.slash_tex()
+	if tex == null:
+		return
+	var facing := -1.0 if sprite.flip_h else 1.0
+	var s := Sprite2D.new()
+	s.texture = tex
+	s.hframes = 2
+	s.frame = 1 if anim_name == "upper" else 0
+	s.flip_h = sprite.flip_h
+	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	s.position = Vector2(facing * (30.0 * sprite_scale), -body_h * 0.5)
+	s.scale = Vector2(sprite_scale * 1.35, sprite_scale * 1.35)
+	s.modulate = Color(1.0, 0.35, 0.3, 0.9)
+	add_child(s)
+
+	var tween := create_tween()
+	tween.tween_property(s, "scale", Vector2(sprite_scale * 1.7, sprite_scale * 1.7), 0.12)
+	tween.parallel().tween_property(s, "modulate:a", 0.0, 0.12)
+	tween.chain().tween_callback(s.queue_free)
+
+
 func _strike() -> void:
 	# Dasher: lunge pendek dulu (masih bisa di-dash, tidak bisa jalan kaki).
 	if strike_lunge > 0.0 and _player != null:
@@ -191,6 +223,7 @@ func _strike() -> void:
 		if dist > 20.0:
 			position += to.normalized() * minf(strike_lunge, dist - 20.0)
 	_unflash()
+	_spawn_attack_slash(_attack_anim())
 	var d := position.distance_to(_player.position)
 	if d <= ai_range + 15.0:
 		_player.take_damage(ai_damage)
@@ -199,6 +232,7 @@ func _strike() -> void:
 		ai_state = 3
 		ai_timer = strike_gap
 		_flash(Color("ffe066"))
+		sprite.play(_attack_anim())
 	else:
 		_release_token()
 		ai_state = 2
@@ -217,6 +251,7 @@ func _update_slam(delta: float) -> void:
 		telegraph -= delta
 		if telegraph <= 0.0:
 			_unflash()
+			_spawn_attack_slash("upper")
 			if position.distance_to(_player.position) <= slam_range + 20.0:
 				_player.take_damage(slam_damage)
 			slam_cd = slam_interval
@@ -227,6 +262,7 @@ func _update_slam(delta: float) -> void:
 	if position.distance_to(_player.position) <= slam_range:
 		telegraph = 0.5
 		_flash(Color("ffe066"))
+		sprite.play("upper")
 
 
 func take_damage(amount: int, from_dir: Vector2, heavy: bool = false) -> void:
@@ -314,8 +350,9 @@ func _update_visual() -> void:
 		if absf(dx) > 4.0:
 			sprite.flip_h = dx < 0.0
 	if ai_state == 1 or ai_state == 3:
-		if sprite.animation != "jab":
-			sprite.play("jab")
+		var want_anim := _attack_anim()
+		if sprite.animation != want_anim:
+			sprite.play(want_anim)
 	elif velocity.length() > 20.0:
 		if sprite.animation != "walk":
 			sprite.play("walk")

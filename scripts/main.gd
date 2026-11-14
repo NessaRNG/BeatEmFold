@@ -1121,4 +1121,3 @@ func _on_combo(stage: int) -> void:
 	combo_label.modulate = colors[idx]
 	if stage > 0:
 		UiAnim.punch(combo_label, 1.25, 0.14)
-
