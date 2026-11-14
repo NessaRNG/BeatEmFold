@@ -161,52 +161,71 @@ func _build_hud() -> void:
 	hud_panel = ColorRect.new()
 	hud_panel.color = Color(0, 0, 0, 0.5)
 	hud_panel.position = Vector2(8, 8)
-	hud_panel.size = Vector2(340, 192)
+	hud_panel.size = Vector2(380, 192)
 	add_child(hud_panel)
 
+	# Avatar Portrait Retro (Neo-NES Chibi)
+	var portrait_tex := load("res://assets/ui/portrait_player.png") as Texture2D
+	if portrait_tex != null:
+		var portrait_rect := TextureRect.new()
+		portrait_rect.texture = portrait_tex
+		portrait_rect.position = Vector2(16, 14)
+		portrait_rect.size = Vector2(52, 52)
+		portrait_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait_rect.stretch_mode = TextureRect.STRETCH_SCALE
+		portrait_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		ui_root.add_child(portrait_rect)
+
 	player_hp_label = Label.new()
-	player_hp_label.position = Vector2(24, 12)
+	player_hp_label.position = Vector2(76, 12)
 	UiTheme.style_title(player_hp_label, 26)
 	ui_root.add_child(player_hp_label)
 
 	hp_bar_bg = ColorRect.new()
-	hp_bar_bg.position = Vector2(24, 48)
-	hp_bar_bg.size = Vector2(280, 16)
-	hp_bar_bg.color = Color(0, 0, 0, 0.6)
+	hp_bar_bg.position = Vector2(76, 48)
+	hp_bar_bg.size = Vector2(280, 18)
+	hp_bar_bg.color = Color(0, 0, 0, 0.8)
 	add_child(hp_bar_bg)
 
 	hp_bar_fill = ColorRect.new()
-	hp_bar_fill.position = Vector2(24, 48)
-	hp_bar_fill.size = Vector2(280, 16)
+	hp_bar_fill.position = Vector2(76, 48)
+	hp_bar_fill.size = Vector2(280, 18)
 	hp_bar_fill.color = Color("55d66b")
 	add_child(hp_bar_fill)
 
 	wave_label = Label.new()
-	wave_label.position = Vector2(24, 70)
+	wave_label.position = Vector2(76, 72)
 	UiTheme.style_body(wave_label, 20)
 	wave_label.text = "WAVE 1/3"
 	ui_root.add_child(wave_label)
 
 	combo_label = Label.new()
-	combo_label.position = Vector2(24, 96)
+	combo_label.position = Vector2(76, 96)
 	UiTheme.style_body(combo_label, 20)
 	combo_label.text = "JAB: -"
 	ui_root.add_child(combo_label)
 
 	deck_label = Label.new()
-	deck_label.position = Vector2(24, 122)
+	deck_label.position = Vector2(76, 122)
 	UiTheme.style_body(deck_label, 16, Color(1, 1, 1, 0.85))
 	ui_root.add_child(deck_label)
 
 	for i in range(4):
 		var pip := ColorRect.new()
-		pip.position = Vector2(24 + i * 18, 146)
+		pip.position = Vector2(76 + i * 18, 146)
 		pip.size = Vector2(14, 14)
 		pip.color = Color("55d66b")
 		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		ui_root.add_child(pip)
 		cash_pips.append(pip)
 	for i in range(3):
+		var pip := ColorRect.new()
+		pip.position = Vector2(166 + i * 18, 146)
+		pip.size = Vector2(14, 14)
+		pip.color = Color("4aa3ff")
+		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ui_root.add_child(pip)
+		discard_pips.append(pip)
 		var pip2 := ColorRect.new()
 		pip2.position = Vector2(24 + 4 * 18 + 14 + i * 18, 146)
 		pip2.size = Vector2(14, 14)

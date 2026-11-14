@@ -75,9 +75,10 @@ func _ready() -> void:
 	add_child(ring)
 
 	sprite = AnimatedSprite2D.new()
-	sprite.sprite_frames = ThugFactory.frames("player")
-	sprite.position = Vector2(-5, -40)
-	sprite.scale = Vector2(1.35, 1.35)
+	var chibi_sf := CharSprites.get_frames("player")
+	sprite.sprite_frames = chibi_sf if chibi_sf != null else ThugFactory.frames("player")
+	sprite.position = Vector2(0, -32)
+	sprite.scale = Vector2(1.5, 1.5)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	sprite.play("idle")
 	add_child(sprite)

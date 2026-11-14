@@ -110,68 +110,60 @@ func _neon_box(pos: Vector2, text: String, pink: Color, glow_c: Color) -> void:
 	flicker_base.append(1.0)
 
 
-# --- 0: ALLEY (sky CC0 fridaruiz + foreground prosedural) ---
+# --- 0: ALLEY (aset tekstur pixel art + retro neon stage) ---
 func _build_alley() -> void:
-	var sky_tex := load("res://assets/bg/nightcity_sky.png") as Texture2D
-	var sky := TextureRect.new()
-	sky.texture = sky_tex
-	sky.position = Vector2.ZERO
-	sky.size = Vector2(1280, 360)
-	sky.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	sky.stretch_mode = TextureRect.STRETCH_SCALE
-	sky.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	add_child(sky)
-	_rect(Vector2(0, 170), Vector2(1280, 260), Color("241d28"))
-	var bh2 := 13
-	var bw2 := 42
-	var row := 0
-	# Bata digambar sebagai rect kecil (murah, jelas).
-	for y in range(170, 430, bh2):
-		var off := int(bw2 / 2.0) if row % 2 == 1 else 0
-		var bx := -bw2
-		while bx < 1280:
-			var v := rng.randf_range(-0.03, 0.05)
-			_rect(Vector2(bx + off + 1, y + 1), Vector2(bw2 - 2, bh2 - 2),
-				Color(0.29 + v, 0.17 + v, 0.2 + v))
-			bx += bw2
-		row += 1
-	for sx in [0.0, 1160.0]:
-		_rect(Vector2(sx, 170), Vector2(120, 260), Color(0, 0, 0, 0.5))
-		_rect(Vector2(sx + (116.0 if sx < 600.0 else 0.0), 170), Vector2(4, 260), Color(0, 0, 0, 0.65))
-	# Bulan + kabel listrik.
-	_rect(Vector2(600, 64), Vector2(40, 40), Color("e8ecff"))
-	_rect(Vector2(588, 76), Vector2(64, 3), Color(1, 1, 1, 0.12))
-	for wx in range(0, 1280, 16):
-		_rect(Vector2(wx, 150 + int(10.0 * sin(wx * 0.02))), Vector2(16, 3), Color("0a0a10"))
-	_rect(Vector2(300, 120), Vector2(4, 40), Color("0a0a10"))
-	_rect(Vector2(900, 125), Vector2(4, 35), Color("0a0a10"))
-	# Jendela dinding + grafiti.
-	for wx in [200, 560, 1080]:
-		_rect(Vector2(wx, 190), Vector2(46, 60), Color("0e1420"))
-		_rect(Vector2(wx + 4, 194), Vector2(38, 52), Color("1c2a44"))
-		_rect(Vector2(wx + 4, 194), Vector2(38, 10), Color(1, 0.85, 0.45, 0.25))
-	_rect(Vector2(480, 330), Vector2(150, 26), Color("2fae5a"))
-	_rect(Vector2(486, 334), Vector2(90, 8), Color("0d2a16"))
-	_rect(Vector2(650, 360), Vector2(110, 22), Color("8f3fe0"))
-	_rect(Vector2(656, 364), Vector2(70, 7), Color("1e0f2a"))
-	# Poster sobek 2x.
-	for pd in [[300.0, 250.0, 70.0, 92.0], [384.0, 268.0, 54.0, 72.0]]:
-		_rect(Vector2(pd[0] - 2, pd[1] - 2), Vector2(pd[2] + 4, pd[3] + 4), Color("0d0d12"))
-		_rect(Vector2(pd[0], pd[1]), Vector2(pd[2], pd[3]), Color("cfc8b0"))
-		_rect(Vector2(pd[0] + 8, pd[1] + 10), Vector2(pd[2] - 16, 14), Color("8a2f3c"))
-		_rect(Vector2(pd[0] + 8, pd[1] + 30), Vector2(pd[2] - 16, 4), Color("2b2b33"))
-		_rect(Vector2(pd[0] + 8, pd[1] + 38), Vector2(pd[2] - 24, 4), Color("2b2b33"))
-	# Pipa vertikal + box AC.
-	for px in [150.0, 1120.0]:
-		_rect(Vector2(px, 170), Vector2(26, 260), Color("16161e"))
-		_rect(Vector2(px + 3, 170), Vector2(4, 260), Color(1, 1, 1, 0.08))
-	_rect(Vector2(1050, 300), Vector2(64, 44), Color("3c4250"))
-	_rect(Vector2(1056, 306), Vector2(52, 6), Color(0, 0, 0, 0.4))
-	_neon_box(Vector2(830, 215), "K.O. BAR", Color("ff5fd2"), Color(1, 0.25, 0.75, 0.16))
-	_neon_box(Vector2(180, 300), "24H", Color("5affd2"), Color(0.2, 1, 0.8, 0.12))
-	# Dumpster + lampu.
-	_rect(Vector2(60, 470), Vector2(170, 100), Color("23402e"))
-	_rect(Vector2(54, 458), Vector2(182, 16), Color("2c5340"))
+	# 1. Polished Brick Environment utama (Dinding bata merah-oranye, semen plester mengelupas, paving trotoar, dan aspal arena)
+	var brick_env_path := "res://assets/backgrounds/brick_alley_polished.png"
+	var env_tex := load(brick_env_path) as Texture2D
+	if env_tex != null:
+		var env := TextureRect.new()
+		env.texture = env_tex
+		env.position = Vector2.ZERO
+		env.size = Vector2(1280, 720)
+		env.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		env.stretch_mode = TextureRect.STRETCH_SCALE
+		env.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		add_child(env)
+	else:
+		# Fallback layer modular jika belum ada
+		var sky_path := "res://assets/backgrounds/alley_skyline.png"
+		var sky_tex := load(sky_path) as Texture2D
+		if sky_tex != null:
+			var sky := TextureRect.new()
+			sky.texture = sky_tex
+			sky.position = Vector2.ZERO
+			sky.size = Vector2(1280, 360)
+			sky.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			sky.stretch_mode = TextureRect.STRETCH_SCALE
+			sky.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			add_child(sky)
+
+		var wall_tex := load("res://assets/backgrounds/alley_wall_midground.png") as Texture2D
+		if wall_tex != null:
+			var wall := TextureRect.new()
+			wall.texture = wall_tex
+			wall.position = Vector2(0, 140)
+			wall.size = Vector2(1280, 300)
+			wall.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			wall.stretch_mode = TextureRect.STRETCH_SCALE
+			wall.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			add_child(wall)
+
+		var ground_tex := load("res://assets/backgrounds/alley_ground_lane.png") as Texture2D
+		if ground_tex != null:
+			var ground := TextureRect.new()
+			ground.texture = ground_tex
+			ground.position = Vector2(0, 400)
+			ground.size = Vector2(1280, 320)
+			ground.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			ground.stretch_mode = TextureRect.STRETCH_SCALE
+			ground.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			add_child(ground)
+
+	# Neon signs & interactive stage lights (kompatibel test & visual)
+	_neon_box(Vector2(830, 200), "K.O. BAR", Color("ff5fd2"), Color(1, 0.25, 0.75, 0.16))
+	_neon_box(Vector2(180, 260), "24H", Color("5affd2"), Color(0.2, 1, 0.8, 0.12))
+
 	var lamp := Node2D.new()
 	lamp.name = "Lamp"
 	add_child(lamp)
@@ -192,22 +184,13 @@ func _build_alley() -> void:
 	lamp.add_child(bulb)
 	_glow_poly(PackedVector2Array([Vector2(1152, 192), Vector2(1090, 600), Vector2(1214, 600)]),
 		Color(1, 0.9, 0.6, 0.07))
-	# Kantong sampah + tutup selokan + trotoar.
+
+	# Kantong sampah & dumpster detail
+	_rect(Vector2(60, 470), Vector2(170, 90), Color("23402e"))
+	_rect(Vector2(54, 458), Vector2(182, 16), Color("2c5340"))
 	for b in [[250.0, 548.0, 22.0], [288.0, 556.0, 15.0], [1010.0, 560.0, 18.0]]:
 		_glow_poly(_octagon(Vector2(b[0], b[1]), b[2]), Color("101018"))
-	_rect(Vector2(620, 640), Vector2(70, 14), Color("0c0c12"))
-	_rect(Vector2(630, 642), Vector2(50, 3), Color(1, 1, 1, 0.06))
-	_rect(Vector2(0, 560), Vector2(1280, 10), Color(0, 0, 0, 0.35))
-	var fl := Image.create(1280, 290, false, Image.FORMAT_RGBA8)
-	fl.fill(Color("151624"))
-	for i in range(2200):
-		var px := rng.randi_range(0, 1279)
-		var py := rng.randi_range(0, 289)
-		fl.set_pixel(px, py, Color(1, 1, 1, 0.03) if i % 2 == 0 else Color(0, 0, 0, 0.25))
-	_sprite(fl, Vector2(0, 430))
-	_rect(Vector2(830, 600), Vector2(190, 60), Color(1, 0.25, 0.75, 0.09))
-	_rect(Vector2(180, 600), Vector2(190, 44), Color(0.2, 1, 0.8, 0.07))
-	_rect(Vector2(1100, 600), Vector2(110, 60), Color(1, 0.9, 0.6, 0.07))
+
 
 
 # --- 1: ROOFTOP (senja oranye, toren air, AC, pagar) ---
