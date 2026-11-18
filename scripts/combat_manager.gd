@@ -34,6 +34,8 @@ var hand_manager: HandManager
 var run_manager: RunManager
 ## Tipe hand yang di-seal boss (mis. STRAIGHT). -1 = tidak ada.
 var sealed_hand := -1
+## Tipe hand terakhir yang di-cash (dibaca main.gd untuk animasi, tanpa ubah signature signal).
+var last_hand_type := 0
 
 
 func try_cash_in() -> void:
@@ -120,6 +122,7 @@ func try_cash_in() -> void:
 	hand_manager.clear_selection()
 	if run_manager != null:
 		run_manager.use_cash_in()
+	last_hand_type = hand_type
 	cash_in_resolved.emit(hand_name, damage, targets.size())
 
 

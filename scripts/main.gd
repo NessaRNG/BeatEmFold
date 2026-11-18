@@ -1105,20 +1105,96 @@ func _refresh_status() -> void:
 		hand_ui.set_best_hand(last_best_name, 0)
 
 
+## Animasi serangan khas per tangan poker: pose + slash FX + particle + flash + callout.
+## Murni presentasi — tidak menyentuh damage/target (sudah di-resolve CombatManager).
+const HAND_FX := {
+	0: {"pose": "jab",   "n": 1, "color": Color("7fdfff"), "flash": 0.06, "stop": 0.12, "burst": 4,  "scale": 1.2, "call": 1.10}, # HIGH CARD
+	1: {"pose": "hook",  "n": 1, "color": Color("5aa9ff"), "flash": 0.09, "stop": 0.14, "burst": 6,  "scale": 1.4, "call": 1.25}, # PAIR
+	2: {"pose": "hook",  "n": 2, "color": Color("5ad9ff"), "flash": 0.10, "stop": 0.16, "burst": 9,  "scale": 1.5, "call": 1.30}, # TWO PAIR
+	3: {"pose": "upper", "n": 2, "color": Color("b06bff"), "flash": 0.12, "stop": 0.18, "burst": 12, "scale": 1.6, "call": 1.38}, # THREE
+	4: {"pose": "upper", "n": 3, "color": Color("ffd94d"), "flash": 0.13, "stop": 0.20, "burst": 14, "scale": 1.7, "call": 1.45}, # STRAIGHT
+	5: {"pose": "hook",  "n": 4, "color": Color("5affd2"), "flash": 0.14, "stop": 0.22, "burst": 16, "scale": 1.8, "call": 1.50}, # FLUSH
+	6: {"pose": "upper", "n": 5, "color": Color("ff5fd2"), "flash": 0.16, "stop": 0.24, "burst": 20, "scale": 1.9, "call": 1.60}, # FULL HOUSE
+	7: {"pose": "upper", "n": 6, "color": Color("ff9f40"), "flash": 0.18, "stop": 0.26, "burst": 24, "scale": 2.0, "call": 1.72}, # FOUR
+	8: {"pose": "upper", "n": 8, "color": Color("fff3a0"), "flash": 0.22, "stop": 0.30, "burst": 30, "scale": 2.3, "call": 1.90}, # STRAIGHT FLUSH
+}
+
+
+func _spawn_hand_slash(color: Color, count: int, scale: float) -> void:
+	if not is_instance_valid(player):
+		return
+	var tex := CharSprites.slash_tex()
+	if tex == null:
+		return
+	for i in range(count):
+		var s := Sprite2D.new()
+		s.texture = tex
+		s.hframes = 2
+		s.frame = 1 if i % 2 == 0 else 0
+		s.flip_h = (i % 2 == 1) != (player.facing < 0)
+		s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		var ang := TAU * float(i) / float(maxi(count, 1))
+		var rad := 22.0 + 6.0 * float(i)
+		# FX anak dari main (world space) -> pakai posisi player sebagai origin.
+		s.position = player.position + Vector2(
+			player.facing * 18.0 + cos(ang) * rad, -34.0 + sin(ang) * rad * 0.6)
+		s.scale = Vector2(scale, scale)
+		s.rotation = ang * 0.35
+		s.modulate = Color(color.r, color.g, color.b, 0.95)
+		add_child(s)
+		var tw := create_tween()
+		tw.tween_property(s, "scale", Vector2(scale * 1.35, scale * 1.35), 0.14)
+		tw.parallel().tween_property(s, "modulate:a", 0.0, 0.14)
+		tw.chain().tween_callback(s.queue_free)
+
+
+func _spawn_hand_burst(color: Color, count: int) -> void:
+	if not is_instance_valid(player):
+		return
+	for i in range(count):
+		var p := ColorRect.new()
+		var sz := randf_range(3.0, 7.0)
+		p.size = Vector2(sz, sz)
+		p.color = Color(color.r, color.g, color.b, 0.95)
+		p.position = player.position + Vector2(randf_range(-10.0, 10.0), randf_range(-40.0, -10.0))
+		add_child(p)
+		var ang := randf_range(0.0, TAU)
+		var dist := randf_range(30.0, 90.0)
+		var tw := create_tween()
+		tw.tween_property(p, "position", p.position + Vector2(cos(ang), sin(ang)) * dist, 0.35)
+		tw.parallel().tween_property(p, "modulate:a", 0.0, 0.35)
+		tw.chain().tween_callback(p.queue_free)
+
+
+func _play_hand_anim(hand_type: int) -> void:
+	var fx: Dictionary = HAND_FX.get(hand_type, HAND_FX[0])
+	var color: Color = fx["color"]
+	# Pose khas karakter (aman: sprite frame sudah ada).
+	if is_instance_valid(player) and player.sprite != null:
+		player.sprite.play(String(fx["pose"]))
+	_spawn_hand_slash(color, int(fx["n"]), float(fx["scale"]))
+	_spawn_hand_burst(color, int(fx["burst"]))
+	# Screen flash + hitstop lewat controller time_scale (tidak tabrakan slow-mo).
+	flash_rect.color = Color(color.r, color.g, color.b, float(fx["flash"]))
+	var ft := create_tween()
+	ft.tween_property(flash_rect, "color", Color(color.r, color.g, color.b, 0), 0.18)
+	hitstop(0.3, float(fx["stop"]))
+
+
 func _on_cash_resolved(hand_name: String, damage: int, targets_hit: int) -> void:
-	add_shake(0.5)
-	hitstop(0.15, 0.09)
+	var hand_type := combat_manager.last_hand_type
+	add_shake(0.5 + 0.06 * float(hand_type))
 	Sfx.play_sfx("confirm", -4.0)
 	Sfx.play_sfx("punch_h", -2.0, 1.0, 0.05)
+	var fx: Dictionary = HAND_FX.get(hand_type, HAND_FX[0])
+	var call_scale := float(fx["call"])
 	if targets_hit > 0:
 		combat_label.add_theme_color_override("font_color", Color("ffd94d"))
-		_show_combat_text("%s! %d DMG → %d TARGET" % [hand_name, damage, targets_hit])
+		_show_combat_text("%s! %d DMG → %d TARGET" % [hand_name, damage, targets_hit], call_scale)
 	else:
 		combat_label.add_theme_color_override("font_color", Color("ff7b7b"))
-		_show_combat_text("%s! MISS…" % hand_name)
-	flash_rect.color = Color(1, 0.9, 0.4, 0.14)
-	var ftween := create_tween()
-	ftween.tween_property(flash_rect, "color", Color(1, 0.9, 0.4, 0), 0.18)
+		_show_combat_text("%s! MISS…" % hand_name, call_scale)
+	_play_hand_anim(hand_type)
 	_refresh_status()
 
 
@@ -1127,13 +1203,13 @@ func _on_cash_failed(reason: String) -> void:
 	Sfx.play_sfx("error", -6.0)
 
 
-func _show_combat_text(text: String) -> void:
+func _show_combat_text(text: String, call_scale: float = 1.25) -> void:
 	combat_label.text = text
 	combat_label.modulate = Color(1, 1, 1, 1)
 	combat_label.pivot_offset = combat_label.size * 0.5
-	combat_label.scale = Vector2(1.25, 1.25)
+	combat_label.scale = Vector2(call_scale, call_scale)
 	var pop := create_tween()
-	pop.tween_property(combat_label, "scale", Vector2.ONE, 0.18)
+	pop.tween_property(combat_label, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if combat_tween and combat_tween.is_valid():
 		combat_tween.kill()
 	combat_tween = create_tween()
