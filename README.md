@@ -4,6 +4,18 @@ Beat 'em up + action-deckbuilder real-time. **Pukul = draw** — tiap jab yang k
 
 ![Menu](docs/shots/menu.png)
 
+## Download (build siap pakai)
+
+Rilis biner ada di [GitHub Releases](https://github.com/NessaRNG/BeatEmFold/releases) — nggak perlu pasang Godot buat main:
+
+| Platform | File |
+|---|---|
+| Linux x86_64 | `BeatEmFold-Linux-x86_64` — `chmod +x` lalu jalankan |
+| Windows x86_64 | `BeatEmFold-Windows-x86_64.exe` |
+| Browser | `BeatEmFold-Web.zip` — ekstrak lalu buka lewat web server statis (bukan `file://`) |
+
+Tiap rilis menyertakan `SHA256SUMS`; verifikasi dengan `sha256sum -c SHA256SUMS`. Build baru otomatis terbit saat tag `v*` di-push (GitHub Actions).
+
 ## Core Loop
 
 1. **Berantem** — jab 3-hit, tiap kena = +1 kartu (maks 6 di tangan)

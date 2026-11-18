@@ -1,6 +1,10 @@
 # Godot generated cache — jangan commit
 .godot/
 
+# Hasil export rilis — upload lewat GitHub Releases, bukan di-commit
+build/
+.godot-cli/
+
 # Pack aset belum dipakai game (top-down/siang, clash gaya)
 assets/urban/
 assets/modern-city/
