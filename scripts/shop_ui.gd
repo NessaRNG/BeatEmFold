@@ -9,7 +9,7 @@ const ADD_CARD_PRICE := 3
 const REMOVE_CARD_PRICE := 3
 
 const CARD_W := 210.0
-const CARD_H := 290.0
+const CARD_H := 250.0
 const CARD_GAP := 20.0
 
 var run: RunManager
@@ -26,11 +26,32 @@ var continue_button: Button
 var open := false
 
 ## Power-up: panel PILIHAN terpisah (tidak masuk rows, jaga rows.size()==2).
+var powerup_frame: Panel
 var powerup_buttons: Array = []
 var powerup_picks: Array = []
 var powerup_picked := false
 var powerup_title: Label
 var powerup_note: Label
+
+const PU_FRAME_W := 760.0
+const PU_FRAME_H := 252.0
+const PU_CARD_W := 224.0
+const PU_CARD_H := 152.0
+const PU_CARD_GAP := 20.0
+
+## Warna per kategori power-up.
+static func _cat_color(cat: String) -> Color:
+	match cat:
+		"TINJU":
+			return Color("ff6b5a")
+		"GERAK":
+			return Color("5ad9ff")
+		"AFINITAS":
+			return Color("7bff9e")
+		"FINISHER":
+			return Color("ffd94d")
+		_:
+			return Color("b06bff")
 
 
 func _ready() -> void:
@@ -60,6 +81,12 @@ func _ready() -> void:
 	money_label = _mk_label(24, Color("7bff9e"))
 	money_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	add_child(money_label)
+	# Frame power-up: wadah solid untuk pilihan upgrade.
+	powerup_frame = Panel.new()
+	powerup_frame.add_theme_stylebox_override("panel",
+		UiTheme.panel_framed(Color("120c1ceb"), Color("b06bff"), 3, 16))
+	powerup_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(powerup_frame)
 	get_viewport().size_changed.connect(_layout)
 	_layout()
 
@@ -103,32 +130,88 @@ func pick_powerup(i: int) -> void:
 		return
 	run.add_powerup(powerup_picks[i])
 	powerup_picked = true
-	var lbl: Label = powerup_buttons[i].get_node("Name")
-	lbl.text = "%s\n✓ DIPILIH" % PowerUpData.get_def(powerup_picks[i])["name"]
-	lbl.add_theme_color_override("font_color", Color("7bff9e"))
+	var b: Button = powerup_buttons[i]
+	var def := PowerUpData.get_def(powerup_picks[i])
+	var nm: Label = b.get_node("Name")
+	nm.text = def["name"]
+	nm.add_theme_color_override("font_color", Color("7bff9e"))
+	var badge: Label = b.get_node("Status")
+	badge.text = "✓ DIPILIH"
+	badge.add_theme_color_override("font_color", Color("7bff9e"))
+	b.disabled = true
 	for j in range(powerup_buttons.size()):
 		if j != i:
 			powerup_buttons[j].disabled = true
+			powerup_buttons[j].modulate = Color(0.45, 0.45, 0.45, 0.8)
 	if powerup_note != null:
-		powerup_note.text = "POWER-UP DIDAPAT — lanjut ke ronde berikutnya!"
+		powerup_note.text = "✓ %s didapat — lanjut ke ronde berikutnya" % def["name"]
 
 
 func _mk_powerup_button(idx: int, id: String) -> Button:
-	var b := Button.new()
-	b.custom_minimum_size = Vector2(210, 74)
 	var def := PowerUpData.get_def(id)
+	var cat: String = def["cat"]
+	var col := _cat_color(cat)
+	var stack := run.powerup_count(id) if run != null else 0
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(PU_CARD_W, PU_CARD_H)
+	b.add_theme_stylebox_override("normal", UiTheme.panel_framed(Color("1b1630"), col, 2, 10))
+	b.add_theme_stylebox_override("hover", UiTheme.panel_framed(Color("2a2050"), Color.WHITE, 3, 10))
+	b.add_theme_stylebox_override("pressed", UiTheme.panel_framed(Color("332860"), col, 3, 10))
+	# Key hint kiri-atas.
+	var key := Label.new()
+	UiTheme.style_body(key, 13, Color(1, 1, 1, 0.6))
+	key.text = "[%d]" % (idx + 7)
+	key.position = Vector2(10, 6)
+	key.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(key)
+	# Category badge kanan-atas.
+	var cbadge := Label.new()
+	UiTheme.style_title(cbadge, 14, col)
+	cbadge.text = cat
+	cbadge.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	cbadge.position = Vector2(40, 4)
+	cbadge.size = Vector2(PU_CARD_W - 50, 20)
+	cbadge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(cbadge)
+	# Nama (besar).
 	var nm := Label.new()
 	nm.name = "Name"
-	nm.text = "%s\n%s" % [def["name"], def["desc"]]
-	UiTheme.style_title(nm, 13, Color("ffe066"))
+	UiTheme.style_title(nm, 19, Color("ffe066"))
+	nm.text = def["name"]
 	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	nm.set_anchors_preset(Control.PRESET_FULL_RECT)
+	nm.position = Vector2(8, 38)
+	nm.size = Vector2(PU_CARD_W - 16, 30)
 	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(nm)
-	b.add_theme_stylebox_override("normal",
-		UiTheme.panel_style(Color("1a1530"), Color("b06bff"), 2, 8))
-	b.add_theme_stylebox_override("hover",
-		UiTheme.panel_style(Color("2a1f48"), Color("d9a6ff"), 2, 8))
+	# Deskripsi efek.
+	var desc := Label.new()
+	UiTheme.style_body(desc, 16, Color(1, 1, 1, 0.92))
+	desc.text = def["desc"]
+	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	desc.position = Vector2(8, 62)
+	desc.size = Vector2(PU_CARD_W - 16, 40)
+	desc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(desc)
+	# Stack badge bawah.
+	var sbadge := Label.new()
+	UiTheme.style_body(sbadge, 14, col)
+	sbadge.text = "STACK x%d" % stack if stack > 0 else "BARU"
+	sbadge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sbadge.position = Vector2(8, PU_CARD_H - 26)
+	sbadge.size = Vector2(PU_CARD_W - 16, 22)
+	sbadge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(sbadge)
+	# Status (DIPILIH) — disembunyikan sampai dipilih.
+	var status := Label.new()
+	status.name = "Status"
+	UiTheme.style_title(status, 16, Color("7bff9e"))
+	status.text = ""
+	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	status.position = Vector2(8, PU_CARD_H - 50)
+	status.size = Vector2(PU_CARD_W - 16, 22)
+	status.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(status)
 	b.pressed.connect(func() -> void: pick_powerup(idx))
 	return b
 
@@ -137,39 +220,36 @@ func _build_powerup_panel() -> void:
 	for b in powerup_buttons:
 		b.queue_free()
 	powerup_buttons.clear()
-	if powerup_title == null:
-		powerup_title = _mk_label(18, Color("d9a6ff"))
-		powerup_title.text = "PILIH 1 POWER-UP (GRATIS)"
-		add_child(powerup_title)
-	if powerup_note == null:
-		powerup_note = _mk_label(14, Color(1, 1, 1, 0.8))
-		powerup_note.text = "Klik kartu untuk memilih · efek berlaku mulai ronde ini"
-		add_child(powerup_note)
+	for c in powerup_frame.get_children():
+		c.queue_free()
+	powerup_title = _mk_label(22, Color("d9a6ff"))
+	powerup_title.text = "PILIH 1 POWER-UP  ·  GRATIS"
+	powerup_frame.add_child(powerup_title)
+	powerup_note = _mk_label(15, Color(1, 1, 1, 0.85))
+	powerup_note.text = "Klik kartu atau tekan 7 / 8 / 9 — efek aktif mulai ronde ini"
+	powerup_frame.add_child(powerup_note)
 	for i in range(powerup_picks.size()):
 		var b := _mk_powerup_button(i, powerup_picks[i])
-		add_child(b)
+		powerup_frame.add_child(b)
 		powerup_buttons.append(b)
 	_layout_powerups()
 
 
 func _layout_powerups() -> void:
-	var vp := get_viewport_rect().size
-	var y := 512.0
+	var pad := 14.0
 	if powerup_title != null:
-		powerup_title.position = Vector2(0, y)
-		powerup_title.size = Vector2(vp.x, 30)
+		powerup_title.position = Vector2(pad, 12)
+		powerup_title.size = Vector2(PU_FRAME_W - pad * 2, 34)
 	var n := float(maxi(powerup_buttons.size(), 1))
-	var w := 210.0
-	var gap := 18.0
-	var total := n * w + (n - 1.0) * gap
-	var x := (vp.x - total) * 0.5
+	var total := n * PU_CARD_W + (n - 1.0) * PU_CARD_GAP
+	var x := (PU_FRAME_W - total) * 0.5
 	for b in powerup_buttons:
-		b.position = Vector2(x, y + 36)
-		b.size = Vector2(w, 74)
-		x += w + gap
+		b.position = Vector2(x, 54)
+		b.size = Vector2(PU_CARD_W, PU_CARD_H)
+		x += PU_CARD_W + PU_CARD_GAP
 	if powerup_note != null:
-		powerup_note.position = Vector2(0, y + 116)
-		powerup_note.size = Vector2(vp.x, 24)
+		powerup_note.position = Vector2(pad, PU_FRAME_H - 32)
+		powerup_note.size = Vector2(PU_FRAME_W - pad * 2, 24)
 
 
 func _layout() -> void:
@@ -192,15 +272,27 @@ func _layout() -> void:
 	var n := float(maxi(rows.size(), 1))
 	var total_w := n * CARD_W + (n - 1.0) * CARD_GAP
 	var x := (vp.x - total_w) * 0.5
-	var y := 130.0
+	var y := 108.0
 	for r in rows:
 		var btn: Button = r["btn"]
 		btn.position = Vector2(x, y)
 		btn.size = Vector2(CARD_W, CARD_H)
 		x += CARD_W + CARD_GAP
+	# Frame power-up tepat di bawah kartu beli.
+	var frame_y := y + CARD_H + 18.0
+	if powerup_frame != null:
+		powerup_frame.position = Vector2((vp.x - PU_FRAME_W) * 0.5, frame_y)
+		powerup_frame.size = Vector2(PU_FRAME_W, PU_FRAME_H)
+	# Tombol Lanjut tepat di bawah frame (CONTEN shopboards di area y<720,
+	# walaupun viewport expand lebih tinggi — jangan anchor ke bawah viewport).
 	if continue_button != null:
-		continue_button.position = Vector2((vp.x - 420.0) * 0.5, y + CARD_H + 24.0)
-		continue_button.size = Vector2(420, 54)
+		var cont_y := frame_y + PU_FRAME_H + 18.0
+		continue_button.position = Vector2((vp.x - 460.0) * 0.5, cont_y)
+		continue_button.size = Vector2(460, 58)
+		continue_button.add_theme_stylebox_override("normal",
+			UiTheme.panel_framed(Color("14261a"), Color("55d66b"), 3, 12))
+		continue_button.add_theme_stylebox_override("hover",
+			UiTheme.panel_framed(Color("1d3a24"), Color("7bff9e"), 3, 12))
 	_layout_powerups()
 
 
