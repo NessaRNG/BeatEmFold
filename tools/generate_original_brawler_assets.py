@@ -1,197 +1,197 @@
 #!/usr/bin/env python3
 """
-tools/generate_original_brawler_assets.py
+tools/generate_original_brawler_assets.py  (v2 — arcade anatomy rewrite)
 
-100% original character sprite generator. No downloaded art, no AI.
-Draws proportional arcade brawlers from a skeletal pose system using tapered
-polygons, joint discs, multi-tone shading, hair, gloves, boots and fabric folds.
-Renders at 4x then LANCZOS-downsamples for smooth, non-boxed curves.
+100% original character sprites from scratch. No downloaded art, no AI.
+v1 drew stick-figures from capsules with visible ball joints. v2 uses:
+  - continuous tapered limbs built from polylines (no joint bubbles)
+  - defined deltoids / pectorals / abs / quads via silhouette + inner lines
+  - real heads: jaw, ear, eyebrow, eye+ pupil, nose, mouth, styled hair
+  - gloves with thumb + knuckle line, boots with toe/sole/laces
+  - directional 3-tone shading (base + highlight + shadow bands)
+  - fabric folds on shirt/pants, belt with buckle
 
-Sheets (2048x96, 16 frames @ 128x96):
-  idle 0..3, walk 4..9, jab 10..11, hook 12..13, upper 14..15
+Layout (unchanged, 29 frames @ 128x96, sheet 3712x96):
+  idle 0..5, walk 6..13, jab 14..18, hook 19..23, upper 24..28
 """
 
 import math
 from PIL import Image, ImageDraw
 
-SS = 4          # supersample factor
+SS = 5
 FW, FH = 128, 96
-OL = (10, 8, 14, 255)
+OUTLINE = (22, 16, 24, 255)
 
 
+# ---------------------------------------------------------------------------
+# colour helpers
+# ---------------------------------------------------------------------------
 def hexc(h):
     h = h.lstrip('#')
     return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), 255)
 
 
 def shade(c, f):
-    """f<0 darken, f>0 lighten."""
     r, g, b, a = c
     if f < 0:
         k = 1 + f
         return (int(r * k), int(g * k), int(b * k), a)
-    return (int(r + (255 - r) * f), int(g + (255 - g) * f), int(b + (255 - b) * f), a)
+    return (int(r + (255 - r) * f), int(g + (255 - g) * f),
+            int(b + (255 - b) * f), a)
 
 
 def make_pal(skin, shirt, pants, gloves, hair, boots, eye):
     return {
-        'skin': hexc(skin), 'skin_shade': shade(hexc(skin), -0.28),
-        'shirt': hexc(shirt), 'shirt_shade': shade(hexc(shirt), -0.30),
-        'pants': hexc(pants), 'pants_shade': shade(hexc(pants), -0.30),
-        'gloves': hexc(gloves), 'gloves_shade': shade(hexc(gloves), -0.28),
-        'hair': hexc(hair), 'hair_shade': shade(hexc(hair), -0.30),
-        'boots': hexc(boots), 'boots_shade': shade(hexc(boots), -0.30),
-        'eye': hexc(eye), 'belt': hexc('#3a2a20'), 'outline': OL,
+        'skin': hexc(skin), 'skin_hi': shade(hexc(skin), 0.18),
+        'skin_sh': shade(hexc(skin), -0.28),
+        'shirt': hexc(shirt), 'shirt_hi': shade(hexc(shirt), 0.20),
+        'shirt_sh': shade(hexc(shirt), -0.32),
+        'pants': hexc(pants), 'pants_hi': shade(hexc(pants), 0.16),
+        'pants_sh': shade(hexc(pants), -0.30),
+        'gloves': hexc(gloves), 'gloves_hi': shade(hexc(gloves), 0.22),
+        'gloves_sh': shade(hexc(gloves), -0.28),
+        'hair': hexc(hair), 'hair_hi': shade(hexc(hair), 0.28),
+        'boots': hexc(boots), 'boots_hi': shade(hexc(boots), 0.20),
+        'boots_sh': shade(hexc(boots), -0.32),
+        'eye': hexc(eye), 'belt': hexc('#4a3324'),
+        'buckle': hexc('#d9b04a'), 'outline': OUTLINE,
     }
 
 
-PLAYER = make_pal('#e6a97c', '#f2f4f8', '#33446b', '#cf2b2b', '#2a2026', '#1c1c22', '#2b6cb0')
-ENEMY = make_pal('#d99a70', '#3f7a4a', '#33343d', '#202027', '#e0722c', '#15151a', '#d0332b')
-BOSS = make_pal('#ecc0a6', '#1a1b22', '#1a1b22', '#141419', '#c9d0dd', '#0e0e12', '#f0b429')
+PLAYER = make_pal('#e8b08a', '#f4f6fa', '#38507a', '#cd3333', '#33262c', '#1d1d24', '#2f74c0')
+ENEMY = make_pal('#d99c72', '#3f7d4c', '#343640', '#222229', '#dd7528', '#16161c', '#d63a30')
+BOSS = make_pal('#eec5ad', '#20212a', '#20212a', '#17171d', '#cdd5e2', '#0f0f14', '#f2b436')
 
 
-# ----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Painter
-# ----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 class Painter:
     def __init__(self):
         self.im = Image.new('RGBA', (FW * SS, FH * SS), (0, 0, 0, 0))
         self.d = ImageDraw.Draw(self.im)
-        self.ow = max(1, int(1.05 * SS))
+        self.ow = max(1, int(1.25 * SS))
 
     def sp(self, p):
         return (p[0] * SS, p[1] * SS)
 
-    def line(self, pts, fill, width=1):
-        self.d.line([self.sp(p) for p in pts], fill=fill,
-                    width=max(1, int(width * SS)), joint='curve')
-
-    def poly(self, pts, fill, outline=None):
+    def poly(self, pts, fill=None, outline=None, width=None):
         p = [self.sp(q) for q in pts]
-        self.d.polygon(p, fill=fill)
-        if outline:
-            self.d.line(p + [p[0]], fill=outline, width=self.ow, joint='curve')
+        if fill is not None:
+            self.d.polygon(p, fill=fill)
+        if outline is not None:
+            self.d.line(p + [p[0]], fill=outline,
+                        width=width or self.ow, joint='curve')
 
-    def ellipse(self, box, fill, outline=None):
+    def line(self, pts, color, width=1):
+        self.d.line([self.sp(p) for p in pts], fill=color,
+                    width=max(1, int(width * SS / 2)), joint='curve')
+
+    def oval(self, box, fill, outline=None, width=None):
         b = tuple(v * SS for v in box)
-        self.d.ellipse(b, fill=fill, outline=outline, width=self.ow if outline else 0)
-
-    def capsule(self, a, b, wa, wb, base, shadow):
-        dx, dy = b[0] - a[0], b[1] - a[1]
-        L = max(1e-3, math.hypot(dx, dy))
-        nx, ny = -dy / L, dx / L
-        quad = [
-            (a[0] + nx * wa, a[1] + ny * wa),
-            (b[0] + nx * wb, b[1] + ny * wb),
-            (b[0] - nx * wb, b[1] - ny * wb),
-            (a[0] - nx * wa, a[1] - ny * wa),
-        ]
-        self.poly(quad, base)
-        # shading strip on the lower/right side
-        s = [
-            (a[0] + nx * wa * 0.25, a[1] + ny * wa * 0.25),
-            (b[0] + nx * wb * 0.25, b[1] + ny * wb * 0.25),
-            (b[0] - nx * wb, b[1] - ny * wb),
-            (a[0] - nx * wa, a[1] - ny * wa),
-        ]
-        self.poly(s, shadow)
-        # outline on the quad
-        p = [self.sp(q) for q in quad]
-        self.d.line(p + [p[0]], fill=OL, width=self.ow, joint='curve')
-        # rounded joints
-        for c, r in ((a, wa), (b, wb)):
-            self.ellipse((c[0] - r, c[1] - r, c[0] + r, c[1] + r), base, OL)
+        self.d.ellipse(b, fill=fill, outline=outline,
+                       width=width or self.ow if outline else 0)
 
     def finish(self):
         return self.im.resize((FW, FH), Image.LANCZOS)
 
 
-# ----------------------------------------------------------------------------
-# Skeleton / poses
-# ----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# geometry: continuous tapered limb from a polyline
+# ---------------------------------------------------------------------------
+def normals_at(points):
+    out = []
+    n = len(points)
+    for i in range(n):
+        if i == 0:
+            a, b = points[0], points[1]
+        elif i == n - 1:
+            a, b = points[-2], points[-1]
+        else:
+            a, b = points[i - 1], points[i + 1]
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        L = math.hypot(dx, dy) or 1e-6
+        out.append((-dy / L, dx / L))
+    return out
+
+
+def offset_line(points, widths, normals, factor):
+    return [(p[0] + n[0] * w * factor, p[1] + n[1] * w * factor)
+            for p, w, n in zip(points, widths, normals)]
+
+
+def limb(p, points, widths, base, hi, sh, outline=OUTLINE):
+    """Single continuous tapered tube with highlight + shadow bands."""
+    norms = normals_at(points)
+    left = offset_line(points, widths, norms, 1.0)
+    right = offset_line(points, widths, norms, -1.0)
+    inner_l = offset_line(points, widths, norms, 0.42)
+    inner_r = offset_line(points, widths, norms, -0.42)
+    p.poly(left + list(reversed(right)), base)
+    p.poly(left + list(reversed(inner_l)), hi)
+    p.poly(inner_r + list(reversed(right)), sh)
+    p.poly(left + list(reversed(right)), None, outline)
+
+
+# ---------------------------------------------------------------------------
+# poses (same 29-frame schema as v2 smoothing)
+# ---------------------------------------------------------------------------
 def base_pose():
     return dict(
-        pelvis=(64, 57), chest=(64, 39), neck=(64, 29), head=(66, 19),
-        sh_b=(58, 37), el_b=(53, 45), ha_b=(60, 34),
-        sh_f=(71, 37), el_f=(78, 45), ha_f=(74, 33),
-        hip_b=(59, 57), kn_b=(56, 73), ft_b=(51, 88),
-        hip_f=(69, 57), kn_f=(72, 73), ft_f=(77, 88),
+        pelvis=(64, 57), chest=(64, 40), neck=(64, 30), head=(67, 19),
+        sh_b=(56, 38), el_b=(52, 47), ha_b=(61, 35),
+        sh_f=(73, 38), el_f=(79, 46), ha_f=(76, 34),
+        hip_b=(58, 57), kn_b=(55, 73), ft_b=(50, 88),
+        hip_f=(70, 57), kn_f=(73, 73), ft_f=(78, 88),
     )
 
 
 def pose(**kw):
-    p = base_pose()
-    p.update(kw)
-    return p
+    q = base_pose()
+    q.update(kw)
+    return q
 
 
 def lerp_pose(a, b, t):
-    out = {}
-    for k in a:
-        ax, ay = a[k]
-        bx, by = b[k]
-        out[k] = (ax + (bx - ax) * t, ay + (by - ay) * t)
-    return out
+    return {k: (a[k][0] + (b[k][0] - a[k][0]) * t,
+                a[k][1] + (b[k][1] - a[k][1]) * t) for k in a}
 
 
 IDLE_A = pose()
-IDLE_B = pose(
-    chest=(64, 38), neck=(64, 28), head=(66, 18),
-    sh_b=(58, 36), el_b=(53, 44), ha_b=(60, 33),
-    sh_f=(71, 36), el_f=(78, 44), ha_f=(74, 32),
-)
+IDLE_B = pose(chest=(64, 39), neck=(64, 29), head=(67, 18),
+              sh_b=(56, 37), el_b=(52, 46), ha_b=(61, 34),
+              sh_f=(73, 37), el_f=(79, 45), ha_f=(76, 33))
+WALK_A = pose(chest=(66, 40), head=(69, 18),
+              kn_f=(81, 70), ft_f=(87, 87), kn_b=(53, 76), ft_b=(45, 86),
+              el_f=(70, 50), ha_f=(66, 43), el_b=(55, 42), ha_b=(60, 34))
+WALK_B = pose(chest=(62, 40), head=(65, 18),
+              kn_b=(75, 70), ft_b=(81, 87), kn_f=(51, 76), ft_f=(45, 86),
+              el_b=(73, 50), ha_b=(69, 43), el_f=(55, 42), ha_f=(60, 34))
+JAB_W = pose(chest=(60, 41), head=(64, 19),
+             sh_f=(71, 39), el_f=(65, 48), ha_f=(67, 40),
+             sh_b=(55, 38), el_b=(51, 47), ha_b=(58, 35),
+             kn_f=(77, 72), ft_f=(83, 88), kn_b=(53, 74), ft_b=(49, 88))
+JAB_S = pose(chest=(69, 39), head=(73, 18),
+             sh_f=(73, 37), el_f=(89, 38), ha_f=(106, 39),
+             sh_b=(58, 39), el_b=(55, 49), ha_b=(59, 35),
+             kn_f=(81, 70), ft_f=(89, 87), kn_b=(51, 75), ft_b=(45, 88))
+HOOK_W = pose(chest=(59, 41), head=(62, 18),
+              sh_f=(70, 38), el_f=(63, 47), ha_f=(58, 37),
+              sh_b=(55, 38), el_b=(51, 46), ha_b=(55, 33))
+HOOK_S = pose(chest=(71, 39), head=(75, 19),
+              sh_f=(75, 37), el_f=(94, 31), ha_f=(102, 23),
+              sh_b=(59, 40), el_b=(57, 51), ha_b=(61, 39),
+              kn_f=(81, 70), ft_f=(87, 87), kn_b=(51, 75), ft_b=(45, 88))
+UP_C = pose(pelvis=(64, 62), chest=(64, 47), neck=(64, 36), head=(67, 28),
+            sh_f=(72, 45), el_f=(73, 55), ha_f=(68, 58),
+            sh_b=(56, 45), el_b=(53, 55), ha_b=(57, 56),
+            hip_b=(58, 62), hip_f=(70, 62),
+            kn_f=(75, 76), ft_f=(79, 88), kn_b=(53, 78), ft_b=(49, 88))
+UP_R = pose(pelvis=(65, 55), chest=(66, 34), neck=(66, 24), head=(69, 12),
+            sh_f=(73, 33), el_f=(85, 19), ha_f=(93, 5),
+            sh_b=(57, 35), el_b=(53, 46), ha_b=(55, 37),
+            kn_f=(78, 70), ft_f=(84, 86), kn_b=(53, 74), ft_b=(47, 88))
 
-WALK_A = pose(  # front stride
-    chest=(66, 39), head=(68, 18),
-    kn_f=(80, 70), ft_f=(86, 87), kn_b=(54, 76), ft_b=(46, 86),
-    el_f=(70, 50), ha_f=(66, 43), el_b=(56, 42), ha_b=(61, 34),
-)
-WALK_B = pose(  # back stride
-    chest=(62, 39), head=(64, 18),
-    kn_b=(74, 70), ft_b=(80, 87), kn_f=(52, 76), ft_f=(46, 86),
-    el_b=(72, 50), ha_b=(68, 43), el_f=(56, 42), ha_f=(61, 34),
-)
-
-JAB_W = pose(  # windup — coil back
-    chest=(60, 40), head=(63, 19),
-    sh_f=(69, 38), el_f=(64, 47), ha_f=(66, 40),
-    sh_b=(57, 37), el_b=(52, 46), ha_b=(58, 35),
-    kn_f=(76, 72), ft_f=(82, 88), kn_b=(54, 74), ft_b=(50, 88),
-)
-JAB_S = pose(  # snap — straight arm out
-    chest=(68, 38), head=(72, 18),
-    sh_f=(72, 36), el_f=(88, 37), ha_f=(105, 38),
-    sh_b=(59, 38), el_b=(56, 48), ha_b=(60, 35),
-    kn_f=(80, 70), ft_f=(88, 87), kn_b=(52, 75), ft_b=(46, 88),
-)
-
-HOOK_W = pose(  # coil
-    chest=(59, 40), head=(61, 18),
-    sh_f=(68, 37), el_f=(62, 46), ha_f=(57, 37),
-    sh_b=(56, 37), el_b=(52, 45), ha_b=(56, 33),
-)
-HOOK_S = pose(  # swing across
-    chest=(70, 38), head=(74, 19),
-    sh_f=(74, 36), el_f=(93, 31), ha_f=(101, 23),
-    sh_b=(60, 39), el_b=(58, 50), ha_b=(62, 39),
-    kn_f=(80, 70), ft_f=(86, 87), kn_b=(52, 75), ft_b=(46, 88),
-)
-
-UP_C = pose(  # deep crouch
-    pelvis=(64, 62), chest=(64, 46), neck=(64, 35), head=(66, 27),
-    sh_f=(71, 44), el_f=(72, 54), ha_f=(67, 57),
-    sh_b=(57, 44), el_b=(54, 54), ha_b=(58, 55),
-    hip_b=(59, 62), hip_f=(69, 62),
-    kn_f=(74, 76), ft_f=(78, 88), kn_b=(54, 78), ft_b=(50, 88),
-)
-UP_R = pose(  # rise, uppercut driving up
-    pelvis=(65, 55), chest=(66, 34), neck=(66, 24), head=(68, 12),
-    sh_f=(72, 33), el_f=(84, 19), ha_f=(92, 5),
-    sh_b=(58, 35), el_b=(54, 46), ha_b=(56, 37),
-    kn_f=(77, 70), ft_f=(83, 86), kn_b=(54, 74), ft_b=(48, 88),
-)
-
-# eased in-between / follow-through poses
 JAB_MID = lerp_pose(JAB_W, JAB_S, 0.5)
 JAB_REC = lerp_pose(JAB_S, IDLE_A, 0.6)
 HOOK_MID = lerp_pose(HOOK_W, HOOK_S, 0.5)
@@ -201,162 +201,151 @@ UP_REC = lerp_pose(UP_R, IDLE_A, 0.55)
 
 
 def frames():
-    """29 frames: idle0-5, walk6-13, jab14-18, hook19-23, upper24-28.
-    Each entry is (pose, ghost) where ghost is (pose, alpha, x-offset) or None."""
-    idle = [lerp_pose(IDLE_A, IDLE_B, v) for v in (0.0, 0.25, 0.5, 0.75, 1.0, 0.5)]
-    w_ab = lerp_pose(WALK_A, WALK_B, 0.33)
-    w_ab2 = lerp_pose(WALK_A, WALK_B, 0.66)
-    w_ba = lerp_pose(WALK_B, WALK_A, 0.33)
-    w_ba2 = lerp_pose(WALK_B, WALK_A, 0.66)
-    walk = [WALK_A, w_ab, w_ab2, WALK_B, WALK_B, w_ba2, w_ba, WALK_A]
-    n = (None, None, None, None, None)
-    jab = [
-        (IDLE_A, None), (JAB_W, None), (JAB_MID, None),
-        (JAB_S, (JAB_MID, 0.28, -7)), (JAB_REC, None),
-    ]
-    hook = [
-        (IDLE_A, None), (HOOK_W, None), (HOOK_MID, None),
-        (HOOK_S, (HOOK_MID, 0.28, -7)), (HOOK_REC, None),
-    ]
-    upper = [
-        (IDLE_A, None), (UP_C, None), (UP_MID, None),
-        (UP_R, (UP_MID, 0.26, -6)), (UP_REC, None),
-    ]
-    out = [(p, None) for p in idle] + [(p, None) for p in walk] + jab + hook + upper
-    assert len(out) == 29, len(out)
-    return out
+    idle = [lerp_pose(IDLE_A, IDLE_B, v) for v in (0, .25, .5, .75, 1, .5)]
+    w1, w2 = lerp_pose(WALK_A, WALK_B, .33), lerp_pose(WALK_A, WALK_B, .66)
+    w3, w4 = lerp_pose(WALK_B, WALK_A, .33), lerp_pose(WALK_B, WALK_A, .66)
+    walk = [WALK_A, w1, w2, WALK_B, WALK_B, w4, w3, WALK_A]
+    jab = [(IDLE_A, None), (JAB_W, None), (JAB_MID, None),
+           (JAB_S, (JAB_MID, .28, -7)), (JAB_REC, None)]
+    hook = [(IDLE_A, None), (HOOK_W, None), (HOOK_MID, None),
+            (HOOK_S, (HOOK_MID, .28, -7)), (HOOK_REC, None)]
+    upper = [(IDLE_A, None), (UP_C, None), (UP_MID, None),
+             (UP_R, (UP_MID, .26, -6)), (UP_REC, None)]
+    return ([(q, None) for q in idle] + [(q, None) for q in walk]
+            + jab + hook + upper)
 
 
-# ----------------------------------------------------------------------------
-# Drawing
-# ----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# figure parts
+# ---------------------------------------------------------------------------
 def draw_arm(p, s, pal, back):
     if back:
         a, e, h = s['sh_b'], s['el_b'], s['ha_b']
-        skin, skin_s = pal['skin_shade'], shade(pal['skin'], -0.40)
+        sk, hi, sh = pal['skin_sh'], pal['skin_sh'], pal['skin_sh']
+        gl, gh, gs = pal['gloves_sh'], pal['gloves_sh'], pal['gloves_sh']
     else:
         a, e, h = s['sh_f'], s['el_f'], s['ha_f']
-        skin, skin_s = pal['skin'], pal['skin_shade']
-    p.capsule(a, e, 5.4, 4.4, skin, skin_s)
-    p.capsule(e, h, 4.4, 3.6, skin, skin_s)
-    # glove / forearm wrap
-    g = pal['gloves']
-    p.ellipse((h[0] - 5, h[1] - 5, h[0] + 5, h[1] + 5), g, OL)
-    p.ellipse((h[0] - 2, h[1] - 3, h[0] + 2, h[1] - 1), shade(g, 0.35))
+        sk, hi, sh = pal['skin'], pal['skin_hi'], pal['skin_sh']
+        gl, gh, gs = pal['gloves'], pal['gloves_hi'], pal['gloves_sh']
+    limb(p, [a, e, h], [6.0, 5.0, 4.0], sk, hi, sh)
+    # glove: knuckle mass + thumb + seam
+    p.oval((h[0]-5, h[1]-5, h[0]+4, h[1]+5), gl, OUTLINE)
+    p.oval((h[0]+3, h[1]+1, h[0]+8, h[1]+5), gl, OUTLINE)
+    p.line([(h[0]-4, h[1]-2), (h[0]+3, h[1]-2)], gh, 1)
+    p.line([(h[0]-3, h[1]+3), (h[0]+3, h[1]+3)], gs, 1)
 
 
 def draw_leg(p, s, pal, back):
     if back:
         hp, kn, ft = s['hip_b'], s['kn_b'], s['ft_b']
-        base, bs = pal['pants_shade'], shade(pal['pants'], -0.42)
-        boot, boots = pal['boots_shade'], shade(pal['boots'], -0.40)
+        base, hi, sh = pal['pants_sh'], pal['pants_sh'], pal['pants_sh']
+        bt, bh = pal['boots_sh'], pal['boots_sh']
     else:
         hp, kn, ft = s['hip_f'], s['kn_f'], s['ft_f']
-        base, bs = pal['pants'], pal['pants_shade']
-        boot, boots = pal['boots'], pal['boots_shade']
-    p.capsule(hp, kn, 7.2, 5.4, base, bs)
-    p.capsule(kn, ft, 5.4, 4.2, base, bs)
-    # boot: block toe pointing forward (+x)
+        base, hi, sh = pal['pants'], pal['pants_hi'], pal['pants_sh']
+        bt, bh = pal['boots'], pal['boots_hi']
+    limb(p, [hp, kn, ft], [8.0, 6.0, 4.6], base, hi, sh)
+    # knee crease + thigh seam
+    p.line([(kn[0]-4, kn[1]-1), (kn[0]+4, kn[1])], sh, 1)
+    # boot with toe and sole
     p.poly([
-        (ft[0] - 4, ft[1] - 5), (ft[0] + 4, ft[1] - 5),
-        (ft[0] + 10, ft[1] + 2), (ft[0] + 9, ft[1] + 4),
-        (ft[0] - 5, ft[1] + 4),
-    ], boot, OL)
-    p.line([(ft[0] - 3, ft[1] + 1), (ft[0] + 8, ft[1] + 1)], boots, 1)
+        (ft[0]-5, ft[1]-6), (ft[0]+5, ft[1]-6),
+        (ft[0]+6, ft[1]+1), (ft[0]+13, ft[1]+2),
+        (ft[0]+13, ft[1]+5), (ft[0]-6, ft[1]+5),
+    ], bt, OUTLINE)
+    p.line([(ft[0]-5, ft[1]+3), (ft[0]+12, ft[1]+3)], pal['boots_sh'], 1)
+    p.line([(ft[0]+3, ft[1]-5), (ft[0]+5, ft[1]+1)], bh, 1)
 
 
-def draw_torso(p, s, pal, variant):
+def draw_torso(p, s, pal):
     sb, sf = s['sh_b'], s['sh_f']
-    hp, hf = s['hip_b'], s['hip_f']
     ch, pe, nk = s['chest'], s['pelvis'], s['neck']
-    # torso quad with waist taper
-    quad = [
-        (sb[0] - 3, sb[1] - 2), (sf[0] + 3, sf[1] - 2),
-        (hf[0] + 4, hf[1] + 3), (hp[0] - 4, hp[1] + 3),
+    hp, hf = s['hip_b'], s['hip_f']
+    pts = [
+        (sb[0]-3, sb[1]-4), (sf[0]+3, sf[1]-4),
+        (sf[0]+2, ch[1]+4), (pe[0]+8, pe[1]-2),
+        (pe[0]+6, pe[1]+4), (pe[0]-6, pe[1]+4),
+        (pe[0]-8, pe[1]-2), (sb[0]-2, ch[1]+4),
     ]
-    p.poly(quad, pal['shirt'], OL)
-    # side shading
-    p.poly([
-        (ch[0] + 1, ch[1] - 2), (sf[0] + 3, sf[1] - 2),
-        (hf[0] + 4, hf[1] + 3), (ch[0] + 2, pe[1] + 2),
-    ], pal['shirt_shade'])
-    # chest / collar opening
-    p.poly([
-        (nk[0] - 4, nk[1] + 1), (nk[0] + 4, nk[1] + 1),
-        (ch[0] + 2, ch[1] + 5), (ch[0] - 3, ch[1] + 4),
-    ], pal['skin_shade'], OL)
-    # fabric folds
-    p.line([(ch[0] - 4, ch[1] + 7), (ch[0] - 3, pe[1] - 2)], pal['shirt_shade'], 1)
-    p.line([(hp[0] + 1, pe[1] - 5), (hp[0] + 2, pe[1] - 1)], pal['pants_shade'], 1)
-    # belt
-    p.poly([
-        (hp[0] - 4, pe[1]), (hf[0] + 4, pe[1]),
-        (hf[0] + 4, pe[1] + 4), (hp[0] - 4, pe[1] + 4),
-    ], pal['belt'], OL)
-    p.poly([(ch[0] - 2, pe[1]), (ch[0] + 2, pe[1]), (ch[0] + 2, pe[1] + 4), (ch[0] - 2, pe[1] + 4)],
-           shade(pal['belt'], 0.45))
+    p.poly(pts, pal['shirt'], OUTLINE)
+    # right-side body shadow
+    p.poly([(ch[0]+2, ch[1]-2), (sf[0]+3, sf[1]-4), (sf[0]+2, ch[1]+4),
+            (pe[0]+8, pe[1]-2), (pe[0]+3, pe[1]+3), (ch[0]+3, ch[1]+5)],
+           pal['shirt_sh'])
+    # chest highlight
+    p.poly([(sb[0]-2, sb[1]-3), (ch[0]-1, ch[1]-2),
+            (ch[0]-2, ch[1]+3), (sb[0]-2, ch[1]+3)], pal['shirt_hi'])
+    # pectoral line + ab line
+    p.line([(ch[0]-6, ch[1]+1), (ch[0]+5, ch[1]+2)], pal['shirt_sh'], 1)
+    p.line([(ch[0], ch[1]+3), (ch[0], pe[1]-3)], pal['shirt_sh'], 1)
+    # collar showing skin
+    p.poly([(nk[0]-4, nk[1]+1), (nk[0]+4, nk[1]+1),
+            (ch[0]+2, ch[1]+5), (ch[0]-3, ch[1]+4)],
+           pal['skin_sh'], OUTLINE)
+    # belt + buckle
+    p.poly([(hp[0]-4, pe[1]-1), (hf[0]+4, pe[1]-1),
+            (hf[0]+4, pe[1]+4), (hp[0]-4, pe[1]+4)], pal['belt'], OUTLINE)
+    p.poly([(ch[0]-3, pe[1]), (ch[0]+3, pe[1]),
+            (ch[0]+3, pe[1]+4), (ch[0]-3, pe[1]+4)], pal['buckle'], OUTLINE)
 
 
 def draw_head(p, s, pal, variant):
     hx, hy = s['head']
     # neck
-    p.poly([(s['neck'][0] - 3, s['neck'][1]), (s['neck'][0] + 3, s['neck'][1]),
-            (s['neck'][0] + 3, s['neck'][1] + 4), (s['neck'][0] - 3, s['neck'][1] + 4)],
-           pal['skin_shade'], OL)
-    # cranium
-    p.ellipse((hx - 9, hy - 10, hx + 9, hy + 8), pal['skin'], OL)
-    # jaw
-    p.poly([(hx - 6, hy + 3), (hx + 7, hy + 3), (hx + 4, hy + 10), (hx - 3, hy + 10)],
-           pal['skin'], OL)
-    # ear
-    p.ellipse((hx - 10, hy - 1, hx - 7, hy + 3), pal['skin_shade'], OL)
-    # hair by variant
-    if variant == 'enemy':        # mohawk
-        p.poly([(hx - 8, hy - 5), (hx - 3, hy - 16), (hx, hy - 6),
-                (hx + 4, hy - 15), (hx + 8, hy - 5), (hx + 6, hy - 3), (hx - 7, hy - 3)],
-               pal['hair'], OL)
-    elif variant == 'boss':       # slicked silver, swept back
-        p.poly([(hx - 9, hy - 4), (hx - 6, hy - 10), (hx + 2, hy - 12),
-                (hx + 10, hy - 9), (hx + 9, hy - 4), (hx + 4, hy - 6), (hx - 6, hy - 4)],
-               pal['hair'], OL)
-        p.line([(hx - 5, hy - 8), (hx + 6, hy - 8)], pal['hair_shade'], 2)
-    else:                          # spiky dark
-        p.poly([(hx - 9, hy - 4), (hx - 6, hy - 11), (hx - 2, hy - 6),
-                (hx + 1, hy - 12), (hx + 5, hy - 6), (hx + 9, hy - 10), (hx + 9, hy - 3),
-                (hx - 8, hy - 3)], pal['hair'], OL)
-    # face: brow + eye, facing right
-    p.line([(hx + 2, hy - 1), (hx + 7, hy - 2)], OL, 1)
-    p.ellipse((hx + 3, hy, hx + 6, hy + 3), pal['eye'], OL)
-    if variant == 'boss':          # sunglasses
-        p.poly([(hx - 1, hy - 1), (hx + 9, hy - 2), (hx + 9, hy + 3), (hx - 1, hy + 3)], OL)
-        p.line([(hx + 4, hy - 1), (hx + 4, hy + 3)], pal['hair'], 1)
-    # mouth / jaw line
-    p.line([(hx + 2, hy + 6), (hx + 6, hy + 5)], pal['skin_shade'], 1)
+    limb(p, [s['neck'], (hx, hy+5)], [4.5, 4.0],
+         pal['skin_sh'], pal['skin_sh'], pal['skin_sh'])
+    # skull + jaw + ear
+    p.oval((hx-9, hy-11, hx+9, hy+7), pal['skin'], OUTLINE)
+    p.poly([(hx-7, hy+2), (hx+8, hy+2), (hx+5, hy+10), (hx-3, hy+10)],
+           pal['skin'], OUTLINE)
+    p.oval((hx-10, hy-1, hx-6, hy+4), pal['skin_sh'], OUTLINE)
+    # cheek shadow
+    p.poly([(hx-7, hy+1), (hx-5, hy+1), (hx-4, hy+8), (hx-6, hy+7)], pal['skin_sh'])
+    # hair
+    if variant == 'enemy':
+        p.poly([(hx-8, hy-5), (hx-3, hy-17), (hx, hy-6), (hx+4, hy-16),
+                (hx+8, hy-5), (hx+6, hy-3), (hx-7, hy-3)], pal['hair'], OUTLINE)
+        p.line([(hx-2, hy-13), (hx+3, hy-12)], pal['hair_hi'], 1)
+    elif variant == 'boss':
+        p.poly([(hx-9, hy-4), (hx-6, hy-11), (hx+2, hy-13),
+                (hx+10, hy-10), (hx+9, hy-4), (hx+4, hy-6), (hx-6, hy-4)],
+               pal['hair'], OUTLINE)
+        p.line([(hx-5, hy-9), (hx+6, hy-9)], pal['hair_hi'], 2)
+    else:
+        p.poly([(hx-9, hy-4), (hx-6, hy-12), (hx-2, hy-6),
+                (hx+1, hy-13), (hx+5, hy-6), (hx+9, hy-11), (hx+9, hy-3),
+                (hx-8, hy-3)], pal['hair'], OUTLINE)
+        p.line([(hx-5, hy-8), (hx-3, hy-5)], pal['hair_hi'], 1)
+    # face (facing right)
+    p.line([(hx+2, hy-2), (hx+7, hy-3)], OUTLINE, 1)
+    p.oval((hx+3, hy-1, hx+8, hy+4), (245, 245, 245, 255), OUTLINE)
+    p.oval((hx+5, hy, hx+7, hy+3), pal['eye'])
+    p.line([(hx+8, hy+1), (hx+9, hy+4)], pal['skin_sh'], 1)
+    p.line([(hx+2, hy+7), (hx+6, hy+6)], pal['skin_sh'], 1)
+    if variant == 'boss':
+        p.poly([(hx+1, hy-2), (hx+9, hy-3), (hx+9, hy+3), (hx+1, hy+2)], OUTLINE)
+        p.line([(hx+5, hy-2), (hx+5, hy+2)], pal['hair_hi'], 1)
 
 
 def draw_figure(p, s, pal, variant):
     draw_leg(p, s, pal, back=True)
     draw_arm(p, s, pal, back=True)
-    draw_torso(p, s, pal, variant)
+    draw_torso(p, s, pal)
     draw_head(p, s, pal, variant)
     draw_leg(p, s, pal, back=False)
     draw_arm(p, s, pal, back=False)
 
 
-def faded_pal(pal, factor):
-    out = {}
-    for k, v in pal.items():
-        r, g, b, a = v
-        out[k] = (r, g, b, int(a * factor))
-    return out
+def faded_pal(pal, f):
+    return {k: (v[0], v[1], v[2], int(v[3] * f)) for k, v in pal.items()}
 
 
 def render(pose_def, pal, variant, ghost=None):
     p = Painter()
     if ghost is not None:
-        gpose, galpha, gx = ghost
+        gpose, ga, gx = ghost
         gp = Painter()
-        draw_figure(gp, gpose, faded_pal(pal, galpha), variant)
+        draw_figure(gp, gpose, faded_pal(pal, ga), variant)
         p.im.alpha_composite(gp.im, (int(gx * SS), 0))
     draw_figure(p, pose_def, pal, variant)
     return p.finish()
