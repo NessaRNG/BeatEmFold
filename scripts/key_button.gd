@@ -1,6 +1,6 @@
 class_name KeyButton
 extends Button
-## Tombol + shortcut keyboard satu huruf. Label otomatis "(M) MULAI".
+## Tombol + shortcut keyboard satu huruf. Label otomatis "(M) START".
 ## Aktif via _unhandled_key_input (tidak butuh fokus, jalan juga saat pause
 ## bila process_mode ALWAYS). Tanpa mouse pun bisa main penuh.
 
@@ -9,7 +9,8 @@ var hotkey := 0
 
 func setup(label_text: String, key: int) -> void:
 	hotkey = key
-	text = "(%s)%s" % [OS.get_keycode_string(key), label_text.substr(1)]
+	# Label sudah lengkap & diterjemahkan (mis. "Start"), jangan buang huruf pertama.
+	text = "(%s) %s" % [OS.get_keycode_string(key), label_text]
 	pressed.connect(_drop_focus)
 
 

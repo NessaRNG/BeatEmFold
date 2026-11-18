@@ -241,7 +241,7 @@ func _build_hud() -> void:
 		cash_pips.append(pip)
 	var pip_dis_lbl := Label.new()
 	UiTheme.style_body(pip_dis_lbl, 15, Color("5aa9ff"))
-	pip_dis_lbl.text = "BUANG"
+	pip_dis_lbl.text = "DISCARD"
 	pip_dis_lbl.position = Vector2(242, 136)
 	pip_dis_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui_root.add_child(pip_dis_lbl)
@@ -256,7 +256,7 @@ func _build_hud() -> void:
 
 	help_label = Label.new()
 	UiTheme.style_body(help_label, 18, Color(1, 1, 1, 0.92))
-	help_label.text = "Jab: J | Dash: K/Spasi | Tahan Tab + 1-6 pilih | E cash-in | R buang"
+	help_label.text = "Jab: J | Dash: K/Space | Hold Tab + 1-6 select | E cash-in | R discard"
 	help_label.position = Vector2(24, 640)
 	ui_root.add_child(help_label)
 
@@ -264,7 +264,7 @@ func _build_hud() -> void:
 	mode_label.position = Vector2(102, 170)
 	mode_label.size = Vector2(300, 30)
 	UiTheme.style_title(mode_label, 19, Color("ffe066"))
-	mode_label.text = "MODE PILIH KARTU (gerak tetap jalan)"
+	mode_label.text = "CARD SELECT MODE (movement still active)"
 	mode_label.visible = false
 	ui_root.add_child(mode_label)
 
@@ -380,7 +380,7 @@ func _build_menu() -> void:
 	menu_title.visible = false
 	ui_root.add_child(menu_title)
 	menu_sub = Label.new()
-	menu_sub.text = "Pukul = draw. Rakit poker tanpa jeda."
+	menu_sub.text = "Punch = draw. Build poker without stopping."
 	UiTheme.style_body(menu_sub, 18)
 	menu_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	menu_sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -393,7 +393,7 @@ func _build_menu() -> void:
 	menu_best.visible = false
 	ui_root.add_child(menu_best)
 	menu_mulai = KeyButton.new()
-	menu_mulai.setup("Mulai", KEY_M)
+	menu_mulai.setup("Start", KEY_M)
 	menu_mulai.add_theme_font_size_override("font_size", 24)
 	menu_mulai.add_theme_stylebox_override("normal",
 		UiTheme.panel_style(Color("14261a"), Color("55d66b"), 2, 7))
@@ -403,7 +403,7 @@ func _build_menu() -> void:
 	menu_mulai.pressed.connect(func() -> void: _press_mulai())
 	ui_root.add_child(menu_mulai)
 	menu_keluar = KeyButton.new()
-	menu_keluar.setup("Keluar", KEY_K)
+	menu_keluar.setup("Quit", KEY_K)
 	menu_keluar.visible = false
 	menu_keluar.pressed.connect(func() -> void: get_tree().quit())
 	ui_root.add_child(menu_keluar)
@@ -420,7 +420,7 @@ func _build_menu() -> void:
 	menu_ver.visible = false
 	ui_root.add_child(menu_ver)
 	menu_hint = Label.new()
-	menu_hint.text = "ENTER = mulai"
+	menu_hint.text = "ENTER = start"
 	UiTheme.style_title(menu_hint, 18, Color("ffd94d"))
 	menu_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	menu_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -441,7 +441,7 @@ func _build_menu() -> void:
 	pause_title.process_mode = Node.PROCESS_MODE_ALWAYS
 	ui_root.add_child(pause_title)
 	pause_hints = Label.new()
-	pause_hints.text = "ESC/L lanjutkan • T ulangi • M menu utama"
+	pause_hints.text = "ESC/L resume • T retry • M main menu"
 	UiTheme.style_body(pause_hints, 18)
 	pause_hints.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pause_hints.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -449,13 +449,13 @@ func _build_menu() -> void:
 	pause_hints.process_mode = Node.PROCESS_MODE_ALWAYS
 	ui_root.add_child(pause_hints)
 	pause_lanjut = KeyButton.new()
-	pause_lanjut.setup("Lanjutkan", KEY_L)
+	pause_lanjut.setup("Resume", KEY_L)
 	pause_lanjut.visible = false
 	pause_lanjut.process_mode = Node.PROCESS_MODE_ALWAYS
 	pause_lanjut.pressed.connect(func() -> void: toggle_pause())
 	ui_root.add_child(pause_lanjut)
 	pause_menu_btn = KeyButton.new()
-	pause_menu_btn.setup("Menu Utama", KEY_M)
+	pause_menu_btn.setup("Main Menu", KEY_M)
 	pause_menu_btn.visible = false
 	pause_menu_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 	pause_menu_btn.pressed.connect(func() -> void: to_menu())
@@ -479,7 +479,7 @@ func _build_menu() -> void:
 	over_score.visible = false
 	ui_root.add_child(over_score)
 	over_retry = KeyButton.new()
-	over_retry.setup("Coba Lagi", KEY_C)
+	over_retry.setup("Retry", KEY_C)
 	over_retry.add_theme_font_size_override("font_size", 22)
 	over_retry.add_theme_stylebox_override("normal",
 		UiTheme.panel_style(Color("14261a"), Color("55d66b"), 2, 7))
@@ -489,7 +489,7 @@ func _build_menu() -> void:
 	over_retry.pressed.connect(func() -> void: restart_run())
 	ui_root.add_child(over_retry)
 	over_menu_btn = KeyButton.new()
-	over_menu_btn.setup("Menu Utama", KEY_M)
+	over_menu_btn.setup("Main Menu", KEY_M)
 	over_menu_btn.visible = false
 	over_menu_btn.pressed.connect(func() -> void: to_menu())
 	ui_root.add_child(over_menu_btn)
@@ -510,7 +510,7 @@ func _show_menu() -> void:
 	state = ST_MENU
 	player.controls_locked = true
 	_set_hud_visible(false)
-	menu_best.text = "TERBAIK: %d" % run_manager.best
+	menu_best.text = "BEST: %d" % run_manager.best
 	for n in _menu_nodes():
 		n.visible = true
 	_layout_overlays()
@@ -680,7 +680,7 @@ func _build_ask() -> void:
 	ask_box.visible = false
 	ui_root.add_child(ask_box)
 	ask_text = Label.new()
-	ask_text.text = "Main tutorial dulu?"
+	ask_text.text = "Play tutorial first?"
 	UiTheme.style_title(ask_text, 30)
 	ask_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	ask_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -688,12 +688,12 @@ func _build_ask() -> void:
 	ask_text.visible = false
 	ui_root.add_child(ask_text)
 	ask_ya = KeyButton.new()
-	ask_ya.setup("Ya", KEY_Y)
+	ask_ya.setup("Yes", KEY_Y)
 	ask_ya.visible = false
 	ask_ya.pressed.connect(func() -> void: _start_tutorial())
 	ui_root.add_child(ask_ya)
 	ask_tidak = KeyButton.new()
-	ask_tidak.setup("Langsung Main", KEY_L)
+	ask_tidak.setup("Skip Tutorial", KEY_L)
 	ask_tidak.visible = false
 	ask_tidak.pressed.connect(func() -> void: _start_game())
 	ui_root.add_child(ask_tidak)
@@ -748,7 +748,7 @@ func _game_over() -> void:
 	player.controls_locked = true
 	mode_label.visible = false
 	run_manager.save_best()
-	over_score.text = "SKOR %d   •   TERBAIK %d" % [run_manager.score, run_manager.best]
+	over_score.text = "SCORE %d   •   BEST %d" % [run_manager.score, run_manager.best]
 	for n in _over_nodes():
 		n.visible = true
 	UiAnim.pop_in(over_title, 0.3, 0.0, false, 0.5)
@@ -1064,7 +1064,7 @@ func _num_track() -> void:
 ## Buang kartu terpilih (jatah 3x per wave); kalau kosong, buang 1 tertua.
 func _quick_discard() -> void:
 	if not run_manager.can_discard():
-		_on_cash_failed("BUANG HABIS!")
+		_on_cash_failed("OUT OF DISCARDS!")
 		return
 	var sel := hand_manager.get_selected_cards()
 	if sel.is_empty() and not hand_manager.hand.is_empty():
@@ -1096,11 +1096,11 @@ func _refresh_status() -> void:
 	if select_was_held:
 		if sel.size() >= 2:
 			var res := PokerEvaluator.evaluate(sel)
-			hand_ui.set_status("%s (%d) — LEPAS TAB + E = CASH!" % [res["name"], sel.size()], true)
+			hand_ui.set_status("%s (%d) — RELEASE TAB + E = CASH!" % [res["name"], sel.size()], true)
 		elif sel.size() == 1:
-			hand_ui.set_status("PILIH 1 LAGI… (min 2)", false)
+			hand_ui.set_status("PICK 1 MORE… (min 2)", false)
 		else:
-			hand_ui.set_status("TAHAN TAB + 1-6 = toggle", false)
+			hand_ui.set_status("HOLD TAB + 1-6 = toggle", false)
 	else:
 		hand_ui.set_best_hand(last_best_name, 0)
 

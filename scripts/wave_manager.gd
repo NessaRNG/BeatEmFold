@@ -50,7 +50,7 @@ func wave_banner(idx: int) -> String:
 		1:
 			return "ELITE [%s]: %s!%s" % [tier, _elite_names(tier_of(idx)), buff]
 		_:
-			return "%s BOSS: %s DI-SEAL! AWAS SLAM!" % [tier, seal_name(wave_sealed(idx))]
+			return "%s BOSS: %s SEALED! WATCH THE SLAM!" % [tier, seal_name(wave_sealed(idx))]
 
 
 func _fight_names(t: int) -> String:

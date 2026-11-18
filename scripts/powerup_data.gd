@@ -4,17 +4,17 @@ extends RefCounted
 ## Tidak menyentuh TABLE damage poker / Chips x Mult / aturan poker.
 
 const DEFS := {
-	"fist_heavy": {"name": "Sarung Berat", "cat": "TINJU", "desc": "Jab +2 damage"},
-	"fist_launch": {"name": "Finisher Launcher", "cat": "TINJU", "desc": "Jab ke-3 melayang (heavy)"},
-	"fist_reach": {"name": "Jangkauan Panjang", "cat": "TINJU", "desc": "Hitbox jab +30px"},
-	"move_reflex": {"name": "Refleks", "cat": "GERAK", "desc": "Dash i-frame +0.15s"},
-	"move_footwork": {"name": "Footwork", "cat": "GERAK", "desc": "Dash cooldown -0.2s"},
-	"move_breath": {"name": "Napas Panjang", "cat": "GERAK", "desc": "Cash-in +1 / wave"},
-	"aff_heart": {"name": "Afinitas Heart", "cat": "AFINITAS", "desc": "+3 heal / kartu ♥"},
-	"aff_spade": {"name": "Afinitas Spade", "cat": "AFINITAS", "desc": "+2 damage / kartu ♠"},
-	"aff_club": {"name": "Afinitas Club", "cat": "AFINITAS", "desc": "+0.15s stun / kartu ♣"},
-	"aff_diamond": {"name": "Afinitas Diamond", "cat": "AFINITAS", "desc": "+0.25s shield / kartu ♦"},
-	"finisher": {"name": "Amunisi Finisher", "cat": "FINISHER", "desc": "J/Q/K/A = guard-break 0.5s"},
+	"fist_heavy": {"name": "Heavy Gloves", "cat": "FIST", "desc": "Jab +2 damage"},
+	"fist_launch": {"name": "Finisher Launcher", "cat": "FIST", "desc": "3rd jab launches (heavy)"},
+	"fist_reach": {"name": "Long Reach", "cat": "FIST", "desc": "Hitbox jab +30px"},
+	"move_reflex": {"name": "Reflex", "cat": "MOVEMENT", "desc": "Dash i-frame +0.15s"},
+	"move_footwork": {"name": "Footwork", "cat": "MOVEMENT", "desc": "Dash cooldown -0.2s"},
+	"move_breath": {"name": "Deep Breath", "cat": "MOVEMENT", "desc": "Cash-in +1 / wave"},
+	"aff_heart": {"name": "Heart Affinity", "cat": "AFFINITY", "desc": "+3 heal / ♥ card"},
+	"aff_spade": {"name": "Spade Affinity", "cat": "AFFINITY", "desc": "+2 damage / ♠ card"},
+	"aff_club": {"name": "Club Affinity", "cat": "AFFINITY", "desc": "+0.15s stun / ♣ card"},
+	"aff_diamond": {"name": "Diamond Affinity", "cat": "AFFINITY", "desc": "+0.25s shield / ♦ card"},
+	"finisher": {"name": "Finisher Ammo", "cat": "FINISHER", "desc": "J/Q/K/A = guard-break 0.5s"},
 }
 
 const IDS: Array = [

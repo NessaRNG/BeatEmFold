@@ -43,10 +43,10 @@ func try_cash_in() -> void:
 		return
 	var hand: Array = hand_manager.hand
 	if hand.size() < 2:
-		cash_in_failed.emit("BUTUH 2+ KARTU — PUKUL DULU!")
+		cash_in_failed.emit("NEED 2+ CARDS — PUNCH FIRST!")
 		return
 	if run_manager != null and not run_manager.can_cash_in():
-		cash_in_failed.emit("CASH-IN HABIS — JAB STALL!")
+		cash_in_failed.emit("OUT OF CASH-INS — JAB TO STALL!")
 		return
 	var used: Array = hand_manager.get_selected_cards()
 	if used.size() > HandManager.MAX_SELECT:

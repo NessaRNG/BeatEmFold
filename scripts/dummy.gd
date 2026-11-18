@@ -307,7 +307,7 @@ func _die() -> void:
 	_burst(Color("ff5a5a"), 14)
 	if respawns:
 		respawn_timer = RESPAWN_TIME
-		hp_label.text = "KO! respawn..."
+		hp_label.text = "KO! respawning..."
 	else:
 		hp_label.text = "KO!"
 	died.emit()

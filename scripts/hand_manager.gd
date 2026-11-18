@@ -2,7 +2,7 @@ class_name HandManager
 extends Node
 ## Tangan 6 slot. Tiap jab yang KENA musuh = draw 1 (dipicu sinyal
 ## Player.hit_landed dari main.gd). Penuh? kartu tertua auto-buang (FIFO)
-## supaya tempo agresif tetap jalan — sesuai GDD "Pukul = draw".
+## supaya tempo agresif tetap jalan — sesuai GDD "Punch = draw".
 
 signal hand_changed(cards: Array[CardData])
 signal best_hand_changed(hand_name: String, hand_type: int)

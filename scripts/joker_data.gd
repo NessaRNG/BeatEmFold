@@ -11,9 +11,9 @@ extends Resource
 static func starter_pool() -> Array:
 	var out: Array = []
 	var defs := [
-		["bloodlust", "Bloodlust", "+2 Mult saat HP < 50%", 6],
-		["spade_drill", "Spade Drill", "Spades dominan +30 Chips", 6],
-		["parry", "Parry Manual", "Tiap buang kartu shield 1 dtk", 5],
+		["bloodlust", "Bloodlust", "+2 Mult when HP < 50%", 6],
+		["spade_drill", "Spade Drill", "Dominant Spades +30 Chips", 6],
+		["parry", "Parry Manual", "Shield 1s per discarded card", 5],
 	]
 	for d in defs:
 		var j := JokerData.new()

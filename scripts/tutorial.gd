@@ -156,19 +156,19 @@ func _on_tutor_died() -> void:
 func _step_text() -> String:
 	match step:
 		0:
-			return "Gerak: WASD / Panah"
+			return "Move: WASD / Arrows"
 		1:
-			return "Pukul SAMSACK: J, kena %d/3" % mini(hits, 3)
+			return "Hit SAMSACK: J, land %d/3" % mini(hits, 3)
 		2:
-			return "Tiap pukulan = 1 kartu. Kumpulkan %d/5" % mini(hand_manager.hand.size(), 5)
+			return "Each punch = 1 card. Collect %d/5" % mini(hand_manager.hand.size(), 5)
 		3:
-			return "Tahan TAB + tekan 1 dan 2 (%d/2)" % mini(hand_manager.get_selected_cards().size(), 2)
+			return "Hold TAB + press 1 and 2 (%d/2)" % mini(hand_manager.get_selected_cards().size(), 2)
 		4:
-			return "Lepas TAB + tekan E = CASH-IN!"
+			return "Release TAB + press E = CASH-IN!"
 		5:
-			return "Dash: K / Spasi"
+			return "Dash: K / Space"
 		_:
-			return "Habisi SAMSACK itu!"
+			return "Finish off SAMSACK!"
 
 
 func _refresh() -> void:
@@ -177,7 +177,7 @@ func _refresh() -> void:
 	if step == 2 and hand_manager.hand.size() >= 5:
 		_advance()
 		return
-	title_lb.text = "TUTORIAL %d/%d   (L = lewati)" % [mini(step + 1, TOTAL), TOTAL]
+	title_lb.text = "TUTORIAL %d/%d   (L = skip)" % [mini(step + 1, TOTAL), TOTAL]
 	text_lb.text = _step_text()
 	_layout_box()
 

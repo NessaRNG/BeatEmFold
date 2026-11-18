@@ -42,11 +42,11 @@ const PU_CARD_GAP := 20.0
 ## Warna per kategori power-up.
 static func _cat_color(cat: String) -> Color:
 	match cat:
-		"TINJU":
+		"FIST":
 			return Color("ff6b5a")
-		"GERAK":
+		"MOVEMENT":
 			return Color("5ad9ff")
-		"AFINITAS":
+		"AFFINITY":
 			return Color("7bff9e")
 		"FINISHER":
 			return Color("ffd94d")
@@ -136,7 +136,7 @@ func pick_powerup(i: int) -> void:
 	nm.text = def["name"]
 	nm.add_theme_color_override("font_color", Color("7bff9e"))
 	var badge: Label = b.get_node("Status")
-	badge.text = "✓ DIPILIH"
+	badge.text = "✓ SELECTED"
 	badge.add_theme_color_override("font_color", Color("7bff9e"))
 	b.disabled = true
 	for j in range(powerup_buttons.size()):
@@ -144,7 +144,7 @@ func pick_powerup(i: int) -> void:
 			powerup_buttons[j].disabled = true
 			powerup_buttons[j].modulate = Color(0.45, 0.45, 0.45, 0.8)
 	if powerup_note != null:
-		powerup_note.text = "✓ %s didapat — lanjut ke ronde berikutnya" % def["name"]
+		powerup_note.text = "✓ %s acquired — continuing to next wave" % def["name"]
 
 
 func _mk_powerup_button(idx: int, id: String) -> Button:
@@ -196,7 +196,7 @@ func _mk_powerup_button(idx: int, id: String) -> Button:
 	# Stack badge bawah.
 	var sbadge := Label.new()
 	UiTheme.style_body(sbadge, 14, col)
-	sbadge.text = "STACK x%d" % stack if stack > 0 else "BARU"
+	sbadge.text = "STACK x%d" % stack if stack > 0 else "NEW"
 	sbadge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sbadge.position = Vector2(8, PU_CARD_H - 26)
 	sbadge.size = Vector2(PU_CARD_W - 16, 22)
@@ -223,10 +223,10 @@ func _build_powerup_panel() -> void:
 	for c in powerup_frame.get_children():
 		c.queue_free()
 	powerup_title = _mk_label(22, Color("d9a6ff"))
-	powerup_title.text = "PILIH 1 POWER-UP  ·  GRATIS"
+	powerup_title.text = "PICK 1 POWER-UP  ·  FREE"
 	powerup_frame.add_child(powerup_title)
 	powerup_note = _mk_label(15, Color(1, 1, 1, 0.85))
-	powerup_note.text = "Klik kartu atau tekan 7 / 8 / 9 — efek aktif mulai ronde ini"
+	powerup_note.text = "Click a card or press 7 / 8 / 9 — effect active starting this wave"
 	powerup_frame.add_child(powerup_note)
 	for i in range(powerup_picks.size()):
 		var b := _mk_powerup_button(i, powerup_picks[i])
@@ -261,12 +261,12 @@ func _layout() -> void:
 	title_label.text = "K.O. SHOP"
 	title_label.position = Vector2(0, 26)
 	title_label.size = Vector2(vp.x, 44)
-	sub_label.text = "WAVE CLEAR! Borong sebelum ronde berikut."
+	sub_label.text = "WAVE CLEAR! Stock up before the next wave."
 	sub_label.position = Vector2(0, 70)
 	sub_label.size = Vector2(vp.x, 22)
 	coin.position = Vector2(vp.x - 220, 30)
 	coin.size = Vector2(30, 30)
-	money_label.text = "Uang: $%d" % (run.money if run != null else 0)
+	money_label.text = "Money: $%d" % (run.money if run != null else 0)
 	money_label.position = Vector2(vp.x - 184, 28)
 	money_label.size = Vector2(170, 34)
 	var n := float(maxi(rows.size(), 1))
@@ -303,19 +303,19 @@ func refresh(animate: bool = false) -> void:
 	if continue_button != null:
 		continue_button.queue_free()
 	title_label.text = "K.O. SHOP"
-	money_label.text = "Uang: $%d" % run.money
+	money_label.text = "Money: $%d" % run.money
 	var idx := 0
 	var ap := _price(ADD_CARD_PRICE)
-	_add_card(idx, "res://assets/icons/ico_add.png", Color("55d66b"), "Tambah kartu",
-		"1 kartu acak\nmasuk deck",
+	_add_card(idx, "res://assets/icons/ico_add.png", Color("55d66b"), "Add Card",
+		"1 random card\nadded to deck",
 		"$%d" % ap, run.money < ap, "_buy_add_card", [ap])
 	idx += 1
 	var rp := _price(REMOVE_CARD_PRICE)
-	_add_card(idx, "res://assets/icons/ico_remove.png", Color("ff7b7b"), "Buang kartu",
-		"Hapus kartu\nterlemah",
+	_add_card(idx, "res://assets/icons/ico_remove.png", Color("ff7b7b"), "Remove Card",
+		"Remove weakest\ncard",
 		"$%d" % rp, run.money < rp, "_buy_remove_card", [rp])
 	continue_button = KeyButton.new()
-	continue_button.setup("Lanjut", KEY_L)
+	continue_button.setup("Continue", KEY_L)
 	continue_button.add_theme_font_size_override("font_size", 20)
 	continue_button.add_theme_stylebox_override("normal",
 		UiTheme.panel_style(Color("14261a"), Color("55d66b"), 2, 7))

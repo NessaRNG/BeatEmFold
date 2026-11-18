@@ -25,7 +25,7 @@ func _init() -> void:
 	check(main.wave_manager.spawned.is_empty(), "Belum spawn musuh di menu")
 	check(not main.hud_panel.visible, "HUD sembunyi di menu")
 	check(main.menu_title.visible, "Judul tampil")
-	check("TERBAIK" in main.menu_best.text, "Best tampil (%s)" % main.menu_best.text)
+	check("BEST" in main.menu_best.text, "Best tampil (%s)" % main.menu_best.text)
 	var keys_found := false
 	for ch in main.get_children():
 		if ch.get_class() == "Node" and ch.get("game") == main:
@@ -72,7 +72,7 @@ func _init() -> void:
 	await process_frame
 	check(main.state == 2, "Mati -> game over")
 	check(main.over_title.visible, "Judul K.O. tampil")
-	check("SKOR" in main.over_score.text, "Skor tampil (%s)" % main.over_score.text)
+	check("SCORE" in main.over_score.text, "Skor tampil (%s)" % main.over_score.text)
 	check(main.over_retry.visible and main.over_menu_btn.visible, "Tombol retry + menu ada")
 	check(main.over_retry.hotkey == KEY_C, "Retry shortcut C")
 	main.toggle_pause()
