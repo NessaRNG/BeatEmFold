@@ -1,0 +1,123 @@
+{
+  "project": "Beat 'Em Fold",
+  "version": "1.0.0",
+  "created_at": "2026-11-14",
+  "license": "Project-specific / CC0 equivalent dedicated to BeatEmFold repository",
+  "assets": [
+    {
+      "id": "bg_alley_skyline",
+      "path": "assets/backgrounds/alley_skyline.png",
+      "role": "background_sky",
+      "dimensions": "1280x360",
+      "technical_checks_passed": true,
+      "source": "tools/generate_environment_assets.py"
+    },
+    {
+      "id": "bg_alley_wall_midground",
+      "path": "assets/backgrounds/alley_wall_midground.png",
+      "role": "midground_brick_wall",
+      "dimensions": "1280x320",
+      "technical_checks_passed": true,
+      "source": "tools/generate_environment_assets.py"
+    },
+    {
+      "id": "bg_alley_ground_lane",
+      "path": "assets/backgrounds/alley_ground_lane.png",
+      "role": "gameplay_ground_lane",
+      "dimensions": "1280x320",
+      "lane_boundaries": {
+        "top": 430.0,
+        "bottom": 600.0
+      },
+      "technical_checks_passed": true,
+      "source": "tools/generate_environment_assets.py"
+    },
+    {
+      "id": "props_alley_neon",
+      "path": "assets/backgrounds/alley_neon_props.png",
+      "role": "props_neon_atlas",
+      "dimensions": "512x256",
+      "technical_checks_passed": true,
+      "source": "tools/generate_environment_assets.py"
+    },
+    {
+      "id": "sprites_chibi_player",
+      "path": "assets/sprites/chibi_player_sheet.png",
+      "role": "player_chibi_spritesheet",
+      "dimensions": "288x48",
+      "frame_size": "48x48",
+      "frames": [
+        "idle1",
+        "idle2",
+        "walk1",
+        "walk2",
+        "jab",
+        "hook"
+      ],
+      "technical_checks_passed": true,
+      "source": "tools/generate_chibi_brawler_assets.py"
+    },
+    {
+      "id": "sprites_chibi_enemy",
+      "path": "assets/sprites/chibi_enemy_sheet.png",
+      "role": "enemy_chibi_spritesheet",
+      "dimensions": "288x48",
+      "frame_size": "48x48",
+      "technical_checks_passed": true,
+      "source": "tools/generate_chibi_brawler_assets.py"
+    },
+    {
+      "id": "sprites_chibi_boss",
+      "path": "assets/sprites/chibi_boss_sheet.png",
+      "role": "boss_chibi_spritesheet",
+      "dimensions": "288x48",
+      "frame_size": "48x48",
+      "technical_checks_passed": true,
+      "source": "tools/generate_chibi_brawler_assets.py"
+    },
+    {
+      "id": "ui_portrait_player",
+      "path": "assets/ui/portrait_player.png",
+      "role": "hud_player_portrait",
+      "dimensions": "48x48",
+      "technical_checks_passed": true,
+      "source": "tools/generate_chibi_brawler_assets.py"
+    },
+    {
+      "id": "bg_brick_alley_polished",
+      "path": "assets/backgrounds/brick_alley_polished.png",
+      "role": "polished_brick_environment",
+      "dimensions": "1280x720",
+      "technical_checks_passed": true,
+      "source": "tools/generate_chibi_brawler_assets.py"
+    },
+    {
+      "id": "bg_original_alley",
+      "path": "assets/backgrounds/original/alley_far.png, alley_mid.png, alley_near.png",
+      "role": "layered_night_alley",
+      "dimensions": "1280x720 each (3 layers)",
+      "technical_checks_passed": true,
+      "source": "tools/generate_original_backgrounds.py",
+      "license": "100% original code-drawn; dedicated to BeatEmFold",
+      "notes": "Night rain, red brick, wet asphalt. Neon/lamp code nodes kept for flicker."
+    },
+    {
+      "id": "bg_original_rooftop",
+      "path": "assets/backgrounds/original/rooftop_far.png, rooftop_mid.png, rooftop_near.png",
+      "role": "layered_sunset_rooftop",
+      "dimensions": "1280x720 each (3 layers)",
+      "technical_checks_passed": true,
+      "source": "tools/generate_original_backgrounds.py",
+      "license": "100% original code-drawn; dedicated to BeatEmFold"
+    },
+    {
+      "id": "bg_original_bar",
+      "path": "assets/backgrounds/original/bar_far.png, bar_mid.png, bar_near.png",
+      "role": "layered_neon_bar_interior",
+      "dimensions": "1280x720 each (3 layers)",
+      "technical_checks_passed": true,
+      "source": "tools/generate_original_backgrounds.py",
+      "license": "100% original code-drawn; dedicated to BeatEmFold"
+    }
+  ]
+}

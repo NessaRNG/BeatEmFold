@@ -110,60 +110,23 @@ func _neon_box(pos: Vector2, text: String, pink: Color, glow_c: Color) -> void:
 	flicker_base.append(1.0)
 
 
-# --- 0: ALLEY (aset tekstur pixel art + retro neon stage) ---
-func _build_alley() -> void:
-	# 1. Polished Brick Environment utama (Dinding bata merah-oranye, semen plester mengelupas, paving trotoar, dan aspal arena)
-	var brick_env_path := "res://assets/backgrounds/brick_alley_polished.png"
-	var env_tex := load(brick_env_path) as Texture2D
-	if env_tex != null:
-		var env := TextureRect.new()
-		env.texture = env_tex
-		env.position = Vector2.ZERO
-		env.size = Vector2(1280, 720)
-		env.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		env.stretch_mode = TextureRect.STRETCH_SCALE
-		env.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		add_child(env)
-	else:
-		# Fallback layer modular jika belum ada
-		var sky_path := "res://assets/backgrounds/alley_skyline.png"
-		var sky_tex := load(sky_path) as Texture2D
-		if sky_tex != null:
-			var sky := TextureRect.new()
-			sky.texture = sky_tex
-			sky.position = Vector2.ZERO
-			sky.size = Vector2(1280, 360)
-			sky.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			sky.stretch_mode = TextureRect.STRETCH_SCALE
-			sky.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-			add_child(sky)
+## Stack 3 layer original (far -> mid -> near). Filter NEAREST, tanpa mipmap.
+func _layer(stage: String, name: String) -> void:
+	var tex := load("res://assets/backgrounds/original/%s_%s.png" % [stage, name]) as Texture2D
+	if tex == null:
+		return
+	var r := TextureRect.new()
+	r.texture = tex
+	r.position = Vector2.ZERO
+	r.size = Vector2(1280, 720)
+	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	r.stretch_mode = TextureRect.STRETCH_SCALE
+	r.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(r)
 
-		var wall_tex := load("res://assets/backgrounds/alley_wall_midground.png") as Texture2D
-		if wall_tex != null:
-			var wall := TextureRect.new()
-			wall.texture = wall_tex
-			wall.position = Vector2(0, 140)
-			wall.size = Vector2(1280, 300)
-			wall.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			wall.stretch_mode = TextureRect.STRETCH_SCALE
-			wall.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-			add_child(wall)
 
-		var ground_tex := load("res://assets/backgrounds/alley_ground_lane.png") as Texture2D
-		if ground_tex != null:
-			var ground := TextureRect.new()
-			ground.texture = ground_tex
-			ground.position = Vector2(0, 400)
-			ground.size = Vector2(1280, 320)
-			ground.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			ground.stretch_mode = TextureRect.STRETCH_SCALE
-			ground.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-			add_child(ground)
-
-	# Neon signs & interactive stage lights (kompatibel test & visual)
-	_neon_box(Vector2(830, 200), "K.O. BAR", Color("ff5fd2"), Color(1, 0.25, 0.75, 0.16))
-	_neon_box(Vector2(180, 260), "24H", Color("5affd2"), Color(0.2, 1, 0.8, 0.12))
-
+func _add_lamp() -> void:
 	var lamp := Node2D.new()
 	lamp.name = "Lamp"
 	add_child(lamp)
@@ -185,108 +148,32 @@ func _build_alley() -> void:
 	_glow_poly(PackedVector2Array([Vector2(1152, 192), Vector2(1090, 600), Vector2(1214, 600)]),
 		Color(1, 0.9, 0.6, 0.07))
 
-	# Kantong sampah & dumpster detail
-	_rect(Vector2(60, 470), Vector2(170, 90), Color("23402e"))
-	_rect(Vector2(54, 458), Vector2(182, 16), Color("2c5340"))
-	for b in [[250.0, 548.0, 22.0], [288.0, 556.0, 15.0], [1010.0, 560.0, 18.0]]:
-		_glow_poly(_octagon(Vector2(b[0], b[1]), b[2]), Color("101018"))
+
+# --- 0: ALLEY (layer original + neon flicker) ---
+func _build_alley() -> void:
+	_layer("alley", "far")
+	_layer("alley", "mid")
+	_layer("alley", "near")
+	_neon_box(Vector2(830, 200), "K.O. BAR", Color("ff5fd2"), Color(1, 0.25, 0.75, 0.16))
+	_neon_box(Vector2(180, 260), "24H", Color("5affd2"), Color(0.2, 1, 0.8, 0.12))
+	_add_lamp()
 
 
 
-# --- 1: ROOFTOP (senja oranye, toren air, AC, pagar) ---
+# --- 1: ROOFTOP (layer original + neon flicker) ---
 func _build_rooftop() -> void:
-	var sky := Image.create(1280, 360, false, Image.FORMAT_RGBA8)
-	for y in range(360):
-		var t := float(y) / 360.0
-		_px(sky, 0, y, 1280, 1, Color("1a1030").lerp(Color("e06020"), t * t))
-	_sprite(sky, Vector2.ZERO)
-	# Matahari terbenam.
-	_rect(Vector2(580, 220), Vector2(120, 120), Color("ffd94d"))
-	_rect(Vector2(560, 240), Vector2(160, 8), Color(1, 0.85, 0.3, 0.25))
-	# Gedung depan siluet.
-	var x := 0
-	while x < 1280:
-		var bw := rng.randi_range(120, 240)
-		var bh := rng.randi_range(80, 190)
-		_rect(Vector2(x, 360 - bh), Vector2(bw, bh), Color("0e0d18"))
-		for wy in range(int(360 - bh + 10), 350, 18):
-			for wx in range(x + 10, x + bw - 10, 18):
-				if rng.randf() < 0.22:
-					_rect(Vector2(wx, wy), Vector2(8, 10), Color(1, 0.7, 0.35, 0.7))
-		x += bw + rng.randi_range(10, 40)
-	# Dak + pagar.
-	_rect(Vector2(0, 360), Vector2(1280, 70), Color("2a2438"))
-	for px in range(0, 1280, 64):
-		_rect(Vector2(px, 330), Vector2(6, 100), Color("161420"))
-	_rect(Vector2(0, 330), Vector2(1280, 8), Color("3a3450"))
-	# Toren air kiri.
-	_rect(Vector2(90, 230), Vector2(110, 130), Color("4a3a30"))
-	_rect(Vector2(100, 220), Vector2(90, 16), Color("5a4a3c"))
-	for i in range(3):
-		_rect(Vector2(100 + i * 32, 360), Vector2(10, 70), Color("2a2018"))
-	# Box AC kanan + tengah.
-	for b in [Vector2(950, 380), Vector2(1030, 390), Vector2(420, 392)]:
-		_rect(b, Vector2(56, 40), Color("3c4250"))
-		_rect(b + Vector2(6, 6), Vector2(44, 6), Color(0, 0, 0, 0.4))
-	# Antena.
-	_rect(Vector2(700, 200), Vector2(6, 160), Color("101018"))
-	_rect(Vector2(680, 210), Vector2(46, 6), Color("101018"))
-	_rect(Vector2(700, 196), Vector2(10, 10), Color("ff5a5a"))
+	_layer("rooftop", "far")
+	_layer("rooftop", "mid")
+	_layer("rooftop", "near")
 	_neon_box(Vector2(830, 215), "ROOFTOP", Color("ffb14d"), Color(1, 0.6, 0.2, 0.16))
-	# Lantai dak kerikil.
-	var fl := Image.create(1280, 290, false, Image.FORMAT_RGBA8)
-	fl.fill(Color("232030"))
-	for i in range(2600):
-		fl.set_pixel(rng.randi_range(0, 1279), rng.randi_range(0, 289),
-			Color(1, 1, 1, 0.04) if i % 2 == 0 else Color(0, 0, 0, 0.3))
-	_sprite(fl, Vector2(0, 430))
-	_rect(Vector2(830, 600), Vector2(190, 60), Color(1, 0.6, 0.2, 0.08))
 
 
-# --- 2: BAR (interior kayu, lampu panggung, meja) ---
+# --- 2: BAR (layer original + neon flicker) ---
 func _build_bar() -> void:
-	_rect(Vector2(0, 0), Vector2(1280, 430), Color("171019"))
-	# Panel kayu.
-	for px in range(0, 1280, 96):
-		var v := rng.randf_range(-0.02, 0.03)
-		_rect(Vector2(px + 2, 40), Vector2(92, 390), Color(0.24 + v, 0.13 + v, 0.12 + v))
-		_rect(Vector2(px + 2, 40), Vector2(4, 390), Color(0, 0, 0, 0.4))
-	# Rak botol.
-	_rect(Vector2(0, 150), Vector2(1280, 12), Color("0d0a10"))
-	_rect(Vector2(0, 250), Vector2(1280, 12), Color("0d0a10"))
-	for i in range(26):
-		var bx := 30 + i * 47 + rng.randi_range(-6, 6)
-		var bc: Color = [Color("3fae5a"), Color("e04040"), Color("4da6ff"), Color("ffd94d")][i % 4]
-		_rect(Vector2(bx, 118), Vector2(14, 32), bc)
-		_rect(Vector2(bx + 4, 110), Vector2(6, 8), Color(0.8, 0.8, 0.8, 0.7))
-	# Lampu panggung 3 warna.
-	for i in range(3):
-		var lx := 320.0 + i * 320.0
-		var lc: Color = [Color("ff5fd2"), Color("5aa9ff"), Color("ffd94d")][i]
-		_rect(Vector2(lx, 0), Vector2(10, 60), Color("0d0d14"))
-		_rect(Vector2(lx - 8, 60), Vector2(26, 16), lc)
-		_glow_poly(PackedVector2Array(
-			[Vector2(lx + 5, 76), Vector2(lx - 110, 600), Vector2(lx + 120, 600)]),
-			Color(lc.r, lc.g, lc.b, 0.08))
+	_layer("bar", "far")
+	_layer("bar", "mid")
+	_layer("bar", "near")
 	_neon_box(Vector2(545, 300), "K.O. CLUB", Color("5affd2"), Color(0.2, 1, 0.8, 0.14))
-	# Meja + kursi siluet.
-	for t in [Vector2(140, 470), Vector2(1050, 480)]:
-		_rect(t + Vector2(-50, 0), Vector2(120, 14), Color("2e1a12"))
-		_rect(t + Vector2(-6, 14), Vector2(12, 70), Color("1c100c"))
-		_rect(t + Vector2(-80, 30), Vector2(26, 54), Color("141018"))
-		_rect(t + Vector2(64, 30), Vector2(26, 54), Color("141018"))
-	# Lantai kayu.
-	var fl := Image.create(1280, 290, false, Image.FORMAT_RGBA8)
-	fl.fill(Color("1d130e"))
-	for y in range(0, 290, 24):
-		for x2 in range(1280):
-			if x2 % 2 == 0:
-				fl.set_pixel(x2, y, Color(0, 0, 0, 0.35))
-		for i in range(30):
-			fl.set_pixel(rng.randi_range(0, 1279), rng.randi_range(y, mini(y + 23, 289)),
-				Color(1, 0.8, 0.5, 0.03))
-	_sprite(fl, Vector2(0, 430))
-	_rect(Vector2(545, 600), Vector2(190, 60), Color(0.2, 1, 0.8, 0.07))
 
 
 func _process(delta: float) -> void:
