@@ -61,39 +61,45 @@ static func get_frames(character_type: String = "player") -> SpriteFrames:
 		at.region = Rect2(idx * frame_w, 0, frame_w, frame_h)
 		return at
 
-	# 1. idle: 4 frames (0..3) fluid breathing & arm sway
+	# Layout 29 frame: idle 0..5, walk 6..13, jab 14..18, hook 19..23, upper 24..28.
+	# Durasi per-frame bikin windup pelan -> snap cepat -> recover lentur (lebih halus).
+
+	# 1. idle: 6 frame pernapasan sinusoidal
 	sf.add_animation("idle")
-	for i in range(4):
+	for i in range(6):
 		sf.add_frame("idle", make_frame.call(i), 1.0)
 	sf.set_animation_speed("idle", 6.0)
 	sf.set_animation_loop("idle", true)
 
-	# 2. walk: 6 frames (4..9) dynamic run stride
+	# 2. walk: 8 frame stride lengkap
 	sf.add_animation("walk")
-	for i in range(4, 10):
+	for i in range(6, 14):
 		sf.add_frame("walk", make_frame.call(i), 1.0)
 	sf.set_animation_speed("walk", 12.0)
 	sf.set_animation_loop("walk", true)
 
-	# 3. jab: 2 frames (10..11) windup -> snap punch
+	# 3. jab: 5 frame guard -> coil -> mid -> snap -> recover
 	sf.add_animation("jab")
-	sf.add_frame("jab", make_frame.call(10), 0.7)
-	sf.add_frame("jab", make_frame.call(11), 1.3)
-	sf.set_animation_speed("jab", 14.0)
+	var jab_dur := [0.45, 0.7, 0.7, 1.0, 1.15]
+	for k in range(5):
+		sf.add_frame("jab", make_frame.call(14 + k), jab_dur[k])
+	sf.set_animation_speed("jab", 15.0)
 	sf.set_animation_loop("jab", false)
 
-	# 4. hook: 2 frames (12..13) windup -> wide swing
+	# 4. hook: 5 frame coil -> swing -> follow-through -> recover
 	sf.add_animation("hook")
-	sf.add_frame("hook", make_frame.call(12), 0.7)
-	sf.add_frame("hook", make_frame.call(13), 1.3)
-	sf.set_animation_speed("hook", 14.0)
+	var hook_dur := [0.45, 0.7, 0.7, 1.0, 1.15]
+	for k in range(5):
+		sf.add_frame("hook", make_frame.call(19 + k), hook_dur[k])
+	sf.set_animation_speed("hook", 15.0)
 	sf.set_animation_loop("hook", false)
 
-	# 5. upper: 2 frames (14..15) crouch -> air launch
+	# 5. upper: 5 frame crouch -> rise -> launch -> recover
 	sf.add_animation("upper")
-	sf.add_frame("upper", make_frame.call(14), 0.7)
-	sf.add_frame("upper", make_frame.call(15), 1.3)
-	sf.set_animation_speed("upper", 14.0)
+	var upper_dur := [0.5, 0.7, 0.75, 1.0, 1.05]
+	for k in range(5):
+		sf.add_frame("upper", make_frame.call(24 + k), upper_dur[k])
+	sf.set_animation_speed("upper", 13.0)
 	sf.set_animation_loop("upper", false)
 
 	# 6. hit: frame 1 (flinch)

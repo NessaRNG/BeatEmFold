@@ -191,16 +191,40 @@ UP_R = pose(  # rise, uppercut driving up
     kn_f=(77, 70), ft_f=(83, 86), kn_b=(54, 74), ft_b=(48, 88),
 )
 
+# eased in-between / follow-through poses
+JAB_MID = lerp_pose(JAB_W, JAB_S, 0.5)
+JAB_REC = lerp_pose(JAB_S, IDLE_A, 0.6)
+HOOK_MID = lerp_pose(HOOK_W, HOOK_S, 0.5)
+HOOK_REC = lerp_pose(HOOK_S, IDLE_A, 0.6)
+UP_MID = lerp_pose(UP_C, UP_R, 0.4)
+UP_REC = lerp_pose(UP_R, IDLE_A, 0.55)
+
 
 def frames():
-    mid_ab = lerp_pose(WALK_A, WALK_B, 0.5)
-    return [
-        IDLE_A, IDLE_B, IDLE_A, IDLE_B,
-        WALK_A, mid_ab, WALK_B, WALK_B, mid_ab, WALK_A,
-        JAB_W, JAB_S,
-        HOOK_W, HOOK_S,
-        UP_C, UP_R,
+    """29 frames: idle0-5, walk6-13, jab14-18, hook19-23, upper24-28.
+    Each entry is (pose, ghost) where ghost is (pose, alpha, x-offset) or None."""
+    idle = [lerp_pose(IDLE_A, IDLE_B, v) for v in (0.0, 0.25, 0.5, 0.75, 1.0, 0.5)]
+    w_ab = lerp_pose(WALK_A, WALK_B, 0.33)
+    w_ab2 = lerp_pose(WALK_A, WALK_B, 0.66)
+    w_ba = lerp_pose(WALK_B, WALK_A, 0.33)
+    w_ba2 = lerp_pose(WALK_B, WALK_A, 0.66)
+    walk = [WALK_A, w_ab, w_ab2, WALK_B, WALK_B, w_ba2, w_ba, WALK_A]
+    n = (None, None, None, None, None)
+    jab = [
+        (IDLE_A, None), (JAB_W, None), (JAB_MID, None),
+        (JAB_S, (JAB_MID, 0.28, -7)), (JAB_REC, None),
     ]
+    hook = [
+        (IDLE_A, None), (HOOK_W, None), (HOOK_MID, None),
+        (HOOK_S, (HOOK_MID, 0.28, -7)), (HOOK_REC, None),
+    ]
+    upper = [
+        (IDLE_A, None), (UP_C, None), (UP_MID, None),
+        (UP_R, (UP_MID, 0.26, -6)), (UP_REC, None),
+    ]
+    out = [(p, None) for p in idle] + [(p, None) for p in walk] + jab + hook + upper
+    assert len(out) == 29, len(out)
+    return out
 
 
 # ----------------------------------------------------------------------------
@@ -310,22 +334,39 @@ def draw_head(p, s, pal, variant):
     p.line([(hx + 2, hy + 6), (hx + 6, hy + 5)], pal['skin_shade'], 1)
 
 
-def render(pose_def, pal, variant):
+def draw_figure(p, s, pal, variant):
+    draw_leg(p, s, pal, back=True)
+    draw_arm(p, s, pal, back=True)
+    draw_torso(p, s, pal, variant)
+    draw_head(p, s, pal, variant)
+    draw_leg(p, s, pal, back=False)
+    draw_arm(p, s, pal, back=False)
+
+
+def faded_pal(pal, factor):
+    out = {}
+    for k, v in pal.items():
+        r, g, b, a = v
+        out[k] = (r, g, b, int(a * factor))
+    return out
+
+
+def render(pose_def, pal, variant, ghost=None):
     p = Painter()
-    draw_leg(p, pose_def, pal, back=True)
-    draw_arm(p, pose_def, pal, back=True)
-    draw_torso(p, pose_def, pal, variant)
-    draw_head(p, pose_def, pal, variant)
-    draw_leg(p, pose_def, pal, back=False)
-    draw_arm(p, pose_def, pal, back=False)
+    if ghost is not None:
+        gpose, galpha, gx = ghost
+        gp = Painter()
+        draw_figure(gp, gpose, faded_pal(pal, galpha), variant)
+        p.im.alpha_composite(gp.im, (int(gx * SS), 0))
+    draw_figure(p, pose_def, pal, variant)
     return p.finish()
 
 
 def make_sheet(pal, variant, out_path):
     fr = frames()
     sheet = Image.new('RGBA', (FW * len(fr), FH), (0, 0, 0, 0))
-    for i, s in enumerate(fr):
-        sheet.paste(render(s, pal, variant), (i * FW, 0))
+    for i, (s, ghost) in enumerate(fr):
+        sheet.paste(render(s, pal, variant, ghost), (i * FW, 0))
     sheet.save(out_path)
     print(f"generated {out_path} {sheet.size} frames={len(fr)}")
 
