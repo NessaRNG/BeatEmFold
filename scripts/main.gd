@@ -30,8 +30,6 @@ var boss_bar_fill: ColorRect
 var seal_badge: Panel
 var seal_text: Label
 var wave_label: Label
-var combo_label: Label
-var deck_label: Label
 var help_label: Label
 var mode_label: Label
 var combat_label: Label
@@ -165,7 +163,7 @@ func _build_hud() -> void:
 	hud_panel.add_theme_stylebox_override("panel",
 		UiTheme.panel_framed(Color(0.04, 0.03, 0.09, 0.9), Color("6b5a8e"), 2, 14))
 	hud_panel.position = Vector2(14, 12)
-	hud_panel.size = Vector2(392, 216)
+	hud_panel.size = Vector2(392, 160)
 	hud_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui_root.add_child(hud_panel)
 
@@ -220,28 +218,15 @@ func _build_hud() -> void:
 	wave_label.text = "WAVE 1/3"
 	ui_root.add_child(wave_label)
 
-	combo_label = Label.new()
-	combo_label.position = Vector2(102, 122)
-	combo_label.size = Vector2(292, 28)
-	UiTheme.style_title(combo_label, 21, Color("7bff9e"))
-	combo_label.text = "JAB: -"
-	ui_root.add_child(combo_label)
-
-	deck_label = Label.new()
-	deck_label.position = Vector2(102, 152)
-	deck_label.size = Vector2(292, 50)
-	UiTheme.style_body(deck_label, 17, Color(1, 1, 1, 0.9))
-	ui_root.add_child(deck_label)
-
 	var pip_cash_lbl := Label.new()
 	UiTheme.style_body(pip_cash_lbl, 15, Color("7bff9e"))
 	pip_cash_lbl.text = "CASH"
-	pip_cash_lbl.position = Vector2(102, 184)
+	pip_cash_lbl.position = Vector2(102, 136)
 	pip_cash_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui_root.add_child(pip_cash_lbl)
 	for i in range(4):
 		var pip := ColorRect.new()
-		pip.position = Vector2(150 + i * 20, 188)
+		pip.position = Vector2(150 + i * 20, 140)
 		pip.size = Vector2(14, 12)
 		pip.color = Color("55d66b")
 		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -250,12 +235,12 @@ func _build_hud() -> void:
 	var pip_dis_lbl := Label.new()
 	UiTheme.style_body(pip_dis_lbl, 15, Color("5aa9ff"))
 	pip_dis_lbl.text = "BUANG"
-	pip_dis_lbl.position = Vector2(242, 184)
+	pip_dis_lbl.position = Vector2(242, 136)
 	pip_dis_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui_root.add_child(pip_dis_lbl)
 	for i in range(3):
 		var pip := ColorRect.new()
-		pip.position = Vector2(300 + i * 20, 188)
+		pip.position = Vector2(300 + i * 20, 140)
 		pip.size = Vector2(14, 12)
 		pip.color = Color("4aa3ff")
 		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -269,7 +254,7 @@ func _build_hud() -> void:
 	ui_root.add_child(help_label)
 
 	mode_label = Label.new()
-	mode_label.position = Vector2(102, 214)
+	mode_label.position = Vector2(102, 170)
 	mode_label.size = Vector2(300, 30)
 	UiTheme.style_title(mode_label, 19, Color("ffe066"))
 	mode_label.text = "MODE PILIH KARTU (gerak tetap jalan)"
@@ -593,7 +578,7 @@ func confirm_end() -> void:
 
 func _set_hud_visible(v: bool) -> void:
 	for n in [hud_panel, player_hp_label, hp_bar_bg, hp_bar_delay, hp_bar_fill, wave_label,
-			combo_label, deck_label, help_label, hand_ui]:
+			help_label, hand_ui]:
 		if n != null:
 			n.visible = v
 	for p in cash_pips:
@@ -608,15 +593,6 @@ func _on_hand_counts(_cards: Array) -> void:
 
 
 func _refresh_counters() -> void:
-	var n := 0
-	if hand_manager != null:
-		n = hand_manager.hand.size()
-	var d := 0
-	if deck != null:
-		d = deck.remaining()
-	deck_label.text = "TANGAN %d/6   DECK %d   $%d   SKOR %d\nCASH %d   BUANG %d" % [
-		n, d, run_manager.money, run_manager.score,
-		run_manager.hands_left, run_manager.discards_left]
 	for i in range(cash_pips.size()):
 		cash_pips[i].color = Color("55d66b") if i < run_manager.hands_left else Color(0, 0, 0, 0.6)
 	for i in range(discard_pips.size()):
@@ -817,7 +793,6 @@ func to_menu() -> void:
 
 func _connect_signals() -> void:
 	player.hp_changed.connect(_refresh_hud)
-	player.combo_changed.connect(_on_combo)
 	player.hit_landed.connect(_on_hit_landed)
 	hand_manager.best_hand_changed.connect(_on_best_hand)
 	hand_manager.selection_changed.connect(_on_selection)
@@ -1149,13 +1124,3 @@ func _refresh_hud(hp: int, max_hp: int) -> void:
 	last_hp = hp
 	if hp <= 0 and state == ST_FIGHT:
 		_game_over()
-
-
-func _on_combo(stage: int) -> void:
-	var names := ["-", "JAB 1", "JAB 2", "FINISHER"]
-	var colors := [Color.WHITE, Color("55d66b"), Color("ffd94d"), Color("ff5555")]
-	var idx := clampi(stage, 0, 3)
-	combo_label.text = "JAB: %s" % names[idx]
-	combo_label.modulate = colors[idx]
-	if stage > 0:
-		UiAnim.punch(combo_label, 1.25, 0.14)
