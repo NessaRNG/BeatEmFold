@@ -57,6 +57,7 @@ var select_pulse_until := 0.0 # msec (Time.get_ticks_msec)
 var last_hp := 100
 var _boss_frac := 1.0
 var _nav_frame := -1
+var _last_area := -1 # tier area sebelumnya, untuk deteksi ganti area
 
 
 ## Tolak aktivasi ganda dalam 1 frame (tombol + shortcut keyboard).
@@ -858,10 +859,14 @@ func _start_wave(idx: int) -> void:
 	select_was_held = false
 	_apply_time_scale()
 	run_manager.reset_for_wave(idx)
+	var area_change := false
 	if stage_bg != null:
 		# Stage awet per 5 boss (15 wave): 0-14 alley, 15-29 rooftop, 30-44 bar.
 		var block := int(WaveManager.loop_of(idx) / 5.0)
-		stage_bg.set_theme(block % 3, block)
+		var area := block % 3
+		area_change = area != _last_area
+		_last_area = area
+		stage_bg.set_theme(area, block)
 	wave_manager.start_wave(idx, self)
 	for e in wave_manager.spawned:
 		e.died.connect(_on_enemy_died.bind(e))
@@ -875,11 +880,11 @@ func _start_wave(idx: int) -> void:
 		_set_boss_visible(true)
 	else:
 		_set_boss_visible(false)
-	_enter_stage(idx)
+	_enter_stage(idx, area_change)
 
 
 ## Sinematik masuk stage: player jalan dari kiri, musuh diam dulu.
-func _enter_stage(idx: int) -> void:
+func _enter_stage(idx: int, area_change: bool = false) -> void:
 	player.position = Vector2(-80, 520)
 	player.facing = 1
 	player.sprite.flip_h = false
@@ -899,7 +904,24 @@ func _enter_stage(idx: int) -> void:
 			e.ai_enabled = true
 	player.controls_locked = false
 	player.attack_locked = false
-	_show_combat_text(wave_manager.wave_banner(idx))
+	if area_change:
+		_announce_area(idx)
+	else:
+		_show_combat_text(wave_manager.wave_banner(idx))
+
+
+## Announcer khusus saat area berubah (ALLEY -> ROOFTOP -> CLUB): lebih besar, emas, lebih lama.
+func _announce_area(idx: int) -> void:
+	var area_name := WaveManager.tier_name(WaveManager.tier_of(idx))
+	combat_label.add_theme_color_override("font_color", Color("ffd94d"))
+	_show_combat_text("ENTERING %s — WAVE %d" % [area_name, idx + 1], 1.6)
+	# Tahan lebih lama dari banner biasa.
+	if combat_tween and combat_tween.is_valid():
+		combat_tween.kill()
+	combat_tween = create_tween()
+	combat_tween.tween_interval(2.0)
+	combat_tween.tween_property(combat_label, "modulate", Color(1, 1, 1, 0), 0.6)
+	Sfx.play_sfx("confirm", -4.0)
 
 
 func _on_wave_cleared(idx: int) -> void:
@@ -1181,25 +1203,18 @@ func _play_hand_anim(hand_type: int) -> void:
 	hitstop(0.3, float(fx["stop"]))
 
 
-func _on_cash_resolved(hand_name: String, damage: int, targets_hit: int) -> void:
+func _on_cash_resolved(_hand_name: String, _damage: int, _targets_hit: int) -> void:
 	var hand_type := combat_manager.last_hand_type
 	add_shake(0.5 + 0.06 * float(hand_type))
 	Sfx.play_sfx("confirm", -4.0)
 	Sfx.play_sfx("punch_h", -2.0, 1.0, 0.05)
-	var fx: Dictionary = HAND_FX.get(hand_type, HAND_FX[0])
-	var call_scale := float(fx["call"])
-	if targets_hit > 0:
-		combat_label.add_theme_color_override("font_color", Color("ffd94d"))
-		_show_combat_text("%s! %d DMG → %d TARGET" % [hand_name, damage, targets_hit], call_scale)
-	else:
-		combat_label.add_theme_color_override("font_color", Color("ff7b7b"))
-		_show_combat_text("%s! MISS…" % hand_name, call_scale)
+	# Announcer hanya untuk momen besar (area ganti / wave start / clear).
+	# Damage feedback tetap via floating number, shake, flash, FX, SFX, callout scale.
 	_play_hand_anim(hand_type)
 	_refresh_status()
 
 
-func _on_cash_failed(reason: String) -> void:
-	_show_combat_text(reason)
+func _on_cash_failed(_reason: String) -> void:
 	Sfx.play_sfx("error", -6.0)
 
 
