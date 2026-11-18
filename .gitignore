@@ -9,6 +9,8 @@ build/
 .agents/
 .claude/
 .opencode/
+__pycache__/
+*.pyc
 
 # Pack aset belum dipakai game (top-down/siang, clash gaya)
 assets/urban/
