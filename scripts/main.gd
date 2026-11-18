@@ -47,6 +47,13 @@ var state := ST_FIGHT
 var camera: Camera2D
 var trauma := 0.0
 var hitstop_active := false
+var hitstop_factor := 1.0
+## Slow-mo saat mode pilih kartu (Tab) + pulse tiap kartu dipilih.
+const SELECT_SLOW := 0.45
+const SELECT_PULSE := 0.20
+const SELECT_PULSE_SEC := 0.08
+var select_slow_active := false
+var select_pulse_until := 0.0 # msec (Time.get_ticks_msec)
 var last_hp := 100
 var _boss_frac := 1.0
 var _nav_frame := -1
@@ -810,18 +817,46 @@ func add_shake(amount: float) -> void:
 	trauma = minf(trauma + amount, 1.0)
 
 
+## Satu-satunya penulis Engine.time_scale. Gabungkan semua sumber yang aktif
+## (hitstop, slow-mo Tab, pulse pilih kartu) supaya tidak saling menimpa.
+func _apply_time_scale() -> void:
+	var s := 1.0
+	if hitstop_active:
+		s = minf(s, hitstop_factor)
+	if select_slow_active:
+		s = minf(s, SELECT_SLOW)
+	if Time.get_ticks_msec() < int(select_pulse_until):
+		s = minf(s, SELECT_PULSE)
+	Engine.time_scale = s
+
+
+## Sentakan singkat saat kartu dipilih (ditumpuk di atas slow-mo Tab).
+func _pulse_select() -> void:
+	select_pulse_until = float(Time.get_ticks_msec()) + SELECT_PULSE_SEC * 1000.0
+	_apply_time_scale()
+
+
 func hitstop(time_factor: float, dur: float) -> void:
 	if hitstop_active:
 		return
 	hitstop_active = true
-	Engine.time_scale = time_factor
+	hitstop_factor = time_factor
+	_apply_time_scale()
 	await get_tree().create_timer(dur, true, false, true).timeout
-	Engine.time_scale = 1.0
 	hitstop_active = false
+	hitstop_factor = 1.0
+	_apply_time_scale()
 
 
 func _start_wave(idx: int) -> void:
 	state = ST_FIGHT
+	# Pastikan tidak ada slow-mo sisa dari wave/shop sebelumnya.
+	hitstop_active = false
+	hitstop_factor = 1.0
+	select_slow_active = false
+	select_pulse_until = 0.0
+	select_was_held = false
+	_apply_time_scale()
 	run_manager.reset_for_wave(idx)
 	if stage_bg != null:
 		# Stage awet per 5 boss (15 wave): 0-14 alley, 15-29 rooftop, 30-44 bar.
@@ -880,7 +915,11 @@ func _wave_clear_cine(_idx: int) -> void:
 	player.controls_locked = true
 	player.attack_locked = true
 	hitstop_active = false
-	Engine.time_scale = 1.0
+	hitstop_factor = 1.0
+	select_slow_active = false
+	select_pulse_until = 0.0
+	select_was_held = false
+	_apply_time_scale()
 	hitstop(0.25, 1.0)
 	_show_combat_text("WAVE CLEAR!")
 	await get_tree().create_timer(1.05, true, false, true).timeout
@@ -990,11 +1029,16 @@ func _process(_delta: float) -> void:
 	mode_label.visible = held
 	if held != select_was_held:
 		select_was_held = held
+		select_slow_active = held
+		_apply_time_scale()
+		if not held:
+			select_pulse_until = 0.0 # pastikan lepas Tab benar-benar balik normal
 		_refresh_status()
 	if held:
 		for i in range(6):
 			if Input.is_action_just_pressed("slot_%d" % (i + 1)):
 				hand_manager.toggle_select(i)
+				_pulse_select()
 	else:
 		if Input.is_action_just_pressed("cashin"):
 			combat_manager.try_cash_in()
