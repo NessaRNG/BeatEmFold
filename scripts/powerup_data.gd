@@ -4,17 +4,17 @@ extends RefCounted
 ## Tidak menyentuh TABLE damage poker / Chips x Mult / aturan poker.
 
 const DEFS := {
-	"fist_heavy": {"name": "Heavy Gloves", "cat": "FIST", "desc": "Jab +2 damage"},
-	"fist_launch": {"name": "Finisher Launcher", "cat": "FIST", "desc": "3rd jab launches (heavy)"},
-	"fist_reach": {"name": "Long Reach", "cat": "FIST", "desc": "Hitbox jab +30px"},
-	"move_reflex": {"name": "Reflex", "cat": "MOVEMENT", "desc": "Dash i-frame +0.15s"},
-	"move_footwork": {"name": "Footwork", "cat": "MOVEMENT", "desc": "Dash cooldown -0.2s"},
-	"move_breath": {"name": "Deep Breath", "cat": "MOVEMENT", "desc": "Cash-in +1 / wave"},
-	"aff_heart": {"name": "Heart Affinity", "cat": "AFFINITY", "desc": "+3 heal / ♥ card"},
-	"aff_spade": {"name": "Spade Affinity", "cat": "AFFINITY", "desc": "+2 damage / ♠ card"},
-	"aff_club": {"name": "Club Affinity", "cat": "AFFINITY", "desc": "+0.15s stun / ♣ card"},
-	"aff_diamond": {"name": "Diamond Affinity", "cat": "AFFINITY", "desc": "+0.25s shield / ♦ card"},
-	"finisher": {"name": "Finisher Ammo", "cat": "FINISHER", "desc": "J/Q/K/A = guard-break 0.5s"},
+	"fist_heavy": {"name": "Heavy Gloves", "cat": "FIST", "cat_label": "STRIKE", "desc": "Punches hit harder"},
+	"fist_launch": {"name": "Finisher Launcher", "cat": "FIST", "cat_label": "STRIKE", "desc": "Final punch sends enemies flying"},
+	"fist_reach": {"name": "Long Reach", "cat": "FIST", "cat_label": "STRIKE", "desc": "Your fists reach farther"},
+	"move_reflex": {"name": "Reflex", "cat": "MOVEMENT", "cat_label": "AGILITY", "desc": "More time to dodge after a hit"},
+	"move_footwork": {"name": "Footwork", "cat": "MOVEMENT", "cat_label": "AGILITY", "desc": "Dash again sooner"},
+	"move_breath": {"name": "Deep Breath", "cat": "MOVEMENT", "cat_label": "AGILITY", "desc": "One extra cash-in each wave"},
+	"aff_heart": {"name": "Heart Affinity", "cat": "AFFINITY", "cat_label": "SUIT POWER", "desc": "♥ cards heal you"},
+	"aff_spade": {"name": "Spade Affinity", "cat": "AFFINITY", "cat_label": "SUIT POWER", "desc": "♠ cards hit harder"},
+	"aff_club": {"name": "Club Affinity", "cat": "AFFINITY", "cat_label": "SUIT POWER", "desc": "♣ cards freeze enemies"},
+	"aff_diamond": {"name": "Diamond Affinity", "cat": "AFFINITY", "cat_label": "SUIT POWER", "desc": "♦ cards protect you"},
+	"finisher": {"name": "Finisher Ammo", "cat": "FINISHER", "cat_label": "FINISHER", "desc": "Face cards break enemy guard"},
 }
 
 const IDS: Array = [

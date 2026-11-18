@@ -164,10 +164,10 @@ func _mk_powerup_button(idx: int, id: String) -> Button:
 	key.position = Vector2(10, 6)
 	key.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(key)
-	# Category badge kanan-atas.
+	# Category badge kanan-atas (label ramah, warna tetap dari cat internal).
 	var cbadge := Label.new()
 	UiTheme.style_title(cbadge, 14, col)
-	cbadge.text = cat
+	cbadge.text = String(def.get("cat_label", cat))
 	cbadge.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	cbadge.position = Vector2(40, 4)
 	cbadge.size = Vector2(PU_CARD_W - 50, 20)
