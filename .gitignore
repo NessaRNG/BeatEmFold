@@ -5,6 +5,11 @@
 build/
 .godot-cli/
 
+# Lokal agent/tooling config — bukan bagian dari game
+.agents/
+.claude/
+.opencode/
+
 # Pack aset belum dipakai game (top-down/siang, clash gaya)
 assets/urban/
 assets/modern-city/
