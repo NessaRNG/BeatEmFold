@@ -28,6 +28,20 @@ var max_hp := 100
 var hp := 100
 var facing := 1
 var attack_stage := 0 # 0 = idle, 1..3 = jab index+1
+## Power-up state (di-set main.gd). Null = perilaku default (test aman).
+var run_manager: RunManager = null
+
+
+func _pc(id: String) -> int:
+	return run_manager.powerup_count(id) if run_manager != null else 0
+
+
+func _jab_range() -> float:
+	return JAB_RANGE + 30.0 * float(_pc("fist_reach"))
+
+
+func _dash_cooldown() -> float:
+	return maxf(0.1, DASH_COOLDOWN - 0.2 * float(_pc("move_footwork")))
 var attack_timer := 0.0
 var combo_timer := 0.0
 var attack_did_hit := false
@@ -136,8 +150,8 @@ func _handle_dash_input() -> void:
 			dir = Vector2(facing, 0)
 		dash_dir = dir.normalized()
 		dash_timer = DASH_TIME
-		dash_cooldown = DASH_COOLDOWN
-		invuln_timer = maxf(invuln_timer, IFRAME_TIME)
+		dash_cooldown = _dash_cooldown()
+		invuln_timer = maxf(invuln_timer, IFRAME_TIME + 0.15 * float(_pc("move_reflex")))
 		dashed.emit()
 		_spawn_dust_puff()
 		# Dash membatalkan jab (game feel responsif)
@@ -236,16 +250,22 @@ func _update_attack(delta: float) -> void:
 
 
 func _do_hit(index: int) -> void:
-	hitbox_shape.position = Vector2(facing * JAB_RANGE * 0.5, -28)
+	var reach := _jab_range()
+	hitbox_shape.shape.size.x = reach
+	hitbox_shape.position = Vector2(facing * reach * 0.5, -28)
 	# Tunggu 1 physics frame agar posisi hitbox update sebelum query
 	await get_tree().physics_frame
 	if dead:
 		return
 	var hit_any := false
+	var dmg: int = int(JAB_DAMAGE[index]) + 2 * _pc("fist_heavy")
+	var heavy := index == 2
 	for body in hitbox.get_overlapping_bodies():
 		if body.is_in_group("enemies") and body.has_method("take_damage"):
 			var dir := Vector2(facing, 0)
-			body.take_damage(JAB_DAMAGE[index], dir, index == 2)
+			body.take_damage(dmg, dir, heavy)
+			if index == 2 and _pc("fist_launch") > 0:
+				body.add_stagger(0.45)
 			hit_any = true
 	if hit_any:
 		hit_landed.emit()

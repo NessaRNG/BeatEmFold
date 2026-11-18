@@ -18,7 +18,28 @@ var wave_index := 0
 var score := 0
 var best := 0
 
+## Power-up stackable: id -> jumlah stack. Bertahan lintas wave/loop.
+var powerups: Dictionary = {}
+var _powerup_rng := RandomNumberGenerator.new()
+
 const SAVE_PATH := "user://beatemfold_save.cfg"
+
+
+func add_powerup(id: String) -> void:
+	powerups[id] = int(powerups.get(id, 0)) + 1
+	changed.emit()
+
+
+func powerup_count(id: String) -> int:
+	return int(powerups.get(id, 0))
+
+
+func hands_per_wave() -> int:
+	return HANDS_PER_WAVE + powerup_count("move_breath")
+
+
+func roll_powerup_choices() -> Array:
+	return PowerUpData.roll(powerups, _powerup_rng)
 
 
 func load_best() -> void:
@@ -29,7 +50,7 @@ func load_best() -> void:
 
 func reset_for_wave(idx: int) -> void:
 	wave_index = idx
-	hands_left = HANDS_PER_WAVE
+	hands_left = hands_per_wave()
 	discards_left = DISCARDS_PER_WAVE
 	changed.emit()
 

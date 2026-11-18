@@ -25,6 +25,13 @@ var rows: Array = [] # [{btn: Button}]; btn berisi icon/nama/desc/harga
 var continue_button: Button
 var open := false
 
+## Power-up: panel PILIHAN terpisah (tidak masuk rows, jaga rows.size()==2).
+var powerup_buttons: Array = []
+var powerup_picks: Array = []
+var powerup_picked := false
+var powerup_title: Label
+var powerup_note: Label
+
 
 func _ready() -> void:
 	visible = false
@@ -75,12 +82,94 @@ func open_shop() -> void:
 	open = true
 	visible = true
 	refresh(true)
+	roll_powerups()
 
 
 func close_shop() -> void:
 	open = false
 	visible = false
 	shop_closed.emit()
+
+
+## Tampilkan 3 pilihan power-up gratis (satu dipilih). Dipanggil main.gd saat shop buka.
+func roll_powerups() -> void:
+	powerup_picked = false
+	powerup_picks = run.roll_powerup_choices() if run != null else []
+	_build_powerup_panel()
+
+
+func pick_powerup(i: int) -> void:
+	if powerup_picked or i < 0 or i >= powerup_picks.size() or run == null:
+		return
+	run.add_powerup(powerup_picks[i])
+	powerup_picked = true
+	var lbl: Label = powerup_buttons[i].get_node("Name")
+	lbl.text = "%s\n✓ DIPILIH" % PowerUpData.get_def(powerup_picks[i])["name"]
+	lbl.add_theme_color_override("font_color", Color("7bff9e"))
+	for j in range(powerup_buttons.size()):
+		if j != i:
+			powerup_buttons[j].disabled = true
+	if powerup_note != null:
+		powerup_note.text = "POWER-UP DIDAPAT — lanjut ke ronde berikutnya!"
+
+
+func _mk_powerup_button(idx: int, id: String) -> Button:
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(210, 74)
+	var def := PowerUpData.get_def(id)
+	var nm := Label.new()
+	nm.name = "Name"
+	nm.text = "%s\n%s" % [def["name"], def["desc"]]
+	UiTheme.style_title(nm, 13, Color("ffe066"))
+	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	nm.set_anchors_preset(Control.PRESET_FULL_RECT)
+	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(nm)
+	b.add_theme_stylebox_override("normal",
+		UiTheme.panel_style(Color("1a1530"), Color("b06bff"), 2, 8))
+	b.add_theme_stylebox_override("hover",
+		UiTheme.panel_style(Color("2a1f48"), Color("d9a6ff"), 2, 8))
+	b.pressed.connect(func() -> void: pick_powerup(idx))
+	return b
+
+
+func _build_powerup_panel() -> void:
+	for b in powerup_buttons:
+		b.queue_free()
+	powerup_buttons.clear()
+	if powerup_title == null:
+		powerup_title = _mk_label(18, Color("d9a6ff"))
+		powerup_title.text = "PILIH 1 POWER-UP (GRATIS)"
+		add_child(powerup_title)
+	if powerup_note == null:
+		powerup_note = _mk_label(14, Color(1, 1, 1, 0.8))
+		powerup_note.text = "Klik kartu untuk memilih · efek berlaku mulai ronde ini"
+		add_child(powerup_note)
+	for i in range(powerup_picks.size()):
+		var b := _mk_powerup_button(i, powerup_picks[i])
+		add_child(b)
+		powerup_buttons.append(b)
+	_layout_powerups()
+
+
+func _layout_powerups() -> void:
+	var vp := get_viewport_rect().size
+	var y := 520.0
+	if powerup_title != null:
+		powerup_title.position = Vector2(0, y)
+		powerup_title.size = Vector2(vp.x, 30)
+	var n := float(maxi(powerup_buttons.size(), 1))
+	var w := 210.0
+	var gap := 18.0
+	var total := n * w + (n - 1.0) * gap
+	var x := (vp.x - total) * 0.5
+	for b in powerup_buttons:
+		b.position = Vector2(x, y + 36)
+		b.size = Vector2(w, 74)
+		x += w + gap
+	if powerup_note != null:
+		powerup_note.position = Vector2(0, y + 116)
+		powerup_note.size = Vector2(vp.x, 24)
 
 
 func _layout() -> void:
@@ -112,6 +201,7 @@ func _layout() -> void:
 	if continue_button != null:
 		continue_button.position = Vector2((vp.x - 420.0) * 0.5, y + CARD_H + 24.0)
 		continue_button.size = Vector2(420, 54)
+	_layout_powerups()
 
 
 func refresh(animate: bool = false) -> void:

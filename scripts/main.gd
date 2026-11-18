@@ -89,7 +89,7 @@ var last_best_name := "HIGH CARD"
 var last_best_type := 0
 var select_was_held := false
 var r_was_down := false
-var num_was_down := [false, false, false, false, false, false]
+var num_was_down := [false, false, false, false, false, false, false, false, false]
 var combat_tween: Tween
 
 
@@ -326,6 +326,7 @@ func _build_combat() -> void:
 	combat_manager.player = player
 	combat_manager.hand_manager = hand_manager
 	combat_manager.run_manager = run_manager
+	player.run_manager = run_manager # power-up fist/gerak effects
 	add_child(combat_manager)
 	combat_manager.cash_in_resolved.connect(_on_cash_resolved)
 	combat_manager.cash_in_failed.connect(_on_cash_failed)
@@ -966,6 +967,10 @@ func _process(_delta: float) -> void:
 		for i in range(2):
 			if Input.is_physical_key_pressed(KEY_1 + i) and not _num_was(i):
 				shop_ui.buy_index(i)
+		# Power-up pick: keys 7/8/9 (edge-detected via delay of frame index).
+		for i in range(3):
+			if Input.is_physical_key_pressed(KEY_7 + i) and not _num_was(6 + i):
+				shop_ui.pick_powerup(i)
 		_num_track()
 		if Input.is_action_just_pressed("cashin"):
 			shop_ui.close_shop()
@@ -1000,7 +1005,7 @@ func _num_was(i: int) -> bool:
 
 
 func _num_track() -> void:
-	for i in range(6):
+	for i in range(9):
 		num_was_down[i] = Input.is_physical_key_pressed(KEY_1 + i)
 
 

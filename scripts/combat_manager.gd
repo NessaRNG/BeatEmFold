@@ -68,6 +68,27 @@ func try_cash_in() -> void:
 
 	var targets := _collect_targets(hand_type)
 	_magnet(targets)
+
+	# --- Power-up: Afinitas + Finisher (jembatan kartu -> efek fisik) ---
+	# Damage bonus dihitung SEBELUM take_damage; stagger/guard-break SESUDAH,
+	# karena take_damage() menimpa stagger_timer (jadi efek harus dipakai belakangan).
+	var n_spade := 0
+	var n_heart := 0
+	var n_club := 0
+	var n_diamond := 0
+	var club_stun := 0.0
+	var has_finisher := false
+	var finisher_card := false
+	if run_manager != null and not sealed:
+		n_spade = _count_suit(used, CardData.SPADES)
+		n_heart = _count_suit(used, CardData.HEARTS)
+		n_club = _count_suit(used, CardData.CLUBS)
+		n_diamond = _count_suit(used, CardData.DIAMONDS)
+		damage += n_spade * 2 * run_manager.powerup_count("aff_spade")
+		club_stun = n_club * 0.15 * run_manager.powerup_count("aff_club")
+		has_finisher = run_manager.powerup_count("finisher") > 0
+		finisher_card = _has_high_card(used)
+
 	var heavy: bool = suit == CardData.CLUBS or hand_type >= PokerEvaluator.FLUSH
 	for t in targets:
 		var dir := Vector2(signf(t.position.x - player.position.x), 0.0)
@@ -76,6 +97,16 @@ func try_cash_in() -> void:
 		t.take_damage(damage, dir, heavy)
 		if suit == CardData.CLUBS and not sealed:
 			t.add_stagger(0.6)
+		# Efek power-up setelah take_damage supaya tidak timpa.
+		if club_stun > 0.0:
+			t.add_stagger(club_stun)
+		if has_finisher and finisher_card:
+			t.break_guard(0.5)
+
+	if run_manager != null and not sealed:
+		player.heal(n_heart * 3 * run_manager.powerup_count("aff_heart"))
+		if n_diamond > 0 and run_manager.powerup_count("aff_diamond") > 0:
+			player.grant_shield(n_diamond * 0.25 * run_manager.powerup_count("aff_diamond"))
 
 	if not sealed:
 		match suit:
@@ -101,6 +132,23 @@ func _auto_pick(hand: Array) -> Array:
 	var by_rank: Array = hand.duplicate()
 	by_rank.sort_custom(func(a, b): return a.rank > b.rank)
 	return by_rank.slice(0, 2)
+
+
+## Jumlah kartu bersuit tertentu dalam array kartu.
+func _count_suit(cards: Array, suit: int) -> int:
+	var n := 0
+	for c in cards:
+		if c.suit == suit:
+			n += 1
+	return n
+
+
+## Ada kartu J/Q/K/A (rank >= 11) di antara kartu yang dipakai.
+func _has_high_card(cards: Array) -> bool:
+	for c in cards:
+		if c.rank >= 11:
+			return true
+	return false
 
 
 ## Suit dominan kartu scoring; seri -> suit kartu pertama.

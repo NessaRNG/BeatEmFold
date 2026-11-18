@@ -291,6 +291,14 @@ func add_stagger(t: float) -> void:
 	stagger_timer = maxf(stagger_timer, t)
 
 
+## Guard-break (finisher): batalkan telegraph + stagger.
+func break_guard(t: float) -> void:
+	if dead:
+		return
+	telegraph = 0.0
+	stagger_timer = maxf(stagger_timer, t)
+
+
 func _die() -> void:
 	dead = true
 	telegraph = 0.0
