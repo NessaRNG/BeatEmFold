@@ -40,7 +40,7 @@ var flash_rect: ColorRect
 ## Semua UI ber-anchor wajib di bawah CanvasLayer — Control di bawah
 ## Node2D tidak dapat viewport rect (size 0, anchor runtuh off-screen).
 var ui_root: Control
-var hud_panel: ColorRect
+var hud_panel: Panel
 var stage_bg: Node2D
 var cash_pips: Array[ColorRect] = []
 var discard_pips: Array[ColorRect] = []
@@ -63,6 +63,7 @@ func _nav_guard() -> bool:
 	return true
 # Menu & pause.
 var menu_dim: ColorRect
+var menu_frame: Panel
 var menu_title: Label
 var menu_sub: Label
 var menu_best: Label
@@ -160,97 +161,117 @@ func _build_hud() -> void:
 	get_viewport().size_changed.connect(_fit_ui)
 	_fit_ui()
 
-	hud_panel = ColorRect.new()
-	hud_panel.color = Color(0, 0, 0, 0.5)
-	hud_panel.position = Vector2(8, 8)
-	hud_panel.size = Vector2(380, 192)
-	add_child(hud_panel)
+	hud_panel = Panel.new()
+	hud_panel.add_theme_stylebox_override("panel",
+		UiTheme.panel_framed(Color(0.04, 0.03, 0.09, 0.9), Color("6b5a8e"), 2, 14))
+	hud_panel.position = Vector2(14, 12)
+	hud_panel.size = Vector2(392, 216)
+	hud_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui_root.add_child(hud_panel)
 
-	# Avatar Portrait Retro (Neo-NES Chibi)
+	# Avatar Portrait dalam frame neon
+	var portrait_frame := Panel.new()
+	portrait_frame.add_theme_stylebox_override("panel",
+		UiTheme.panel_framed(Color("120e1c"), Color("ff5fd2"), 2, 8))
+	portrait_frame.position = Vector2(24, 24)
+	portrait_frame.size = Vector2(66, 66)
+	portrait_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui_root.add_child(portrait_frame)
 	var portrait_tex := load("res://assets/ui/portrait_player.png") as Texture2D
 	if portrait_tex != null:
 		var portrait_rect := TextureRect.new()
 		portrait_rect.texture = portrait_tex
-		portrait_rect.position = Vector2(16, 14)
-		portrait_rect.size = Vector2(52, 52)
+		portrait_rect.position = Vector2(29, 29)
+		portrait_rect.size = Vector2(56, 56)
 		portrait_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		portrait_rect.stretch_mode = TextureRect.STRETCH_SCALE
 		portrait_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		portrait_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		ui_root.add_child(portrait_rect)
 
 	player_hp_label = Label.new()
-	player_hp_label.position = Vector2(76, 12)
-	UiTheme.style_title(player_hp_label, 26)
+	player_hp_label.position = Vector2(102, 24)
+	player_hp_label.size = Vector2(292, 34)
+	UiTheme.style_title(player_hp_label, 27, Color("f5f5ff"))
 	ui_root.add_child(player_hp_label)
 
 	hp_bar_bg = ColorRect.new()
-	hp_bar_bg.position = Vector2(76, 48)
-	hp_bar_bg.size = Vector2(280, 18)
-	hp_bar_bg.color = Color(0, 0, 0, 0.8)
-	add_child(hp_bar_bg)
+	hp_bar_bg.position = Vector2(102, 64)
+	hp_bar_bg.size = Vector2(280, 22)
+	hp_bar_bg.color = Color(0, 0, 0, 0.85)
+	ui_root.add_child(hp_bar_bg) # FIX: UI harus di CanvasLayer, bukan world Node2D
 
 	hp_bar_delay = ColorRect.new()
-	hp_bar_delay.position = Vector2(76, 48)
-	hp_bar_delay.size = Vector2(280, 18)
+	hp_bar_delay.position = Vector2(102, 64)
+	hp_bar_delay.size = Vector2(280, 22)
 	hp_bar_delay.color = Color("ff5555")
-	add_child(hp_bar_delay)
+	ui_root.add_child(hp_bar_delay)
 
 	hp_bar_fill = ColorRect.new()
-	hp_bar_fill.position = Vector2(76, 48)
-	hp_bar_fill.size = Vector2(280, 18)
+	hp_bar_fill.position = Vector2(102, 64)
+	hp_bar_fill.size = Vector2(280, 22)
 	hp_bar_fill.color = Color("55d66b")
-	add_child(hp_bar_fill)
+	ui_root.add_child(hp_bar_fill)
 
 	wave_label = Label.new()
-	wave_label.position = Vector2(76, 72)
-	UiTheme.style_body(wave_label, 20)
+	wave_label.position = Vector2(102, 92)
+	wave_label.size = Vector2(292, 28)
+	UiTheme.style_title(wave_label, 22, Color("ffd94d"))
 	wave_label.text = "WAVE 1/3"
 	ui_root.add_child(wave_label)
 
 	combo_label = Label.new()
-	combo_label.position = Vector2(76, 96)
-	UiTheme.style_body(combo_label, 20)
+	combo_label.position = Vector2(102, 122)
+	combo_label.size = Vector2(292, 28)
+	UiTheme.style_title(combo_label, 21, Color("7bff9e"))
 	combo_label.text = "JAB: -"
 	ui_root.add_child(combo_label)
 
 	deck_label = Label.new()
-	deck_label.position = Vector2(76, 122)
-	UiTheme.style_body(deck_label, 16, Color(1, 1, 1, 0.85))
+	deck_label.position = Vector2(102, 152)
+	deck_label.size = Vector2(292, 50)
+	UiTheme.style_body(deck_label, 17, Color(1, 1, 1, 0.9))
 	ui_root.add_child(deck_label)
 
+	var pip_cash_lbl := Label.new()
+	UiTheme.style_body(pip_cash_lbl, 15, Color("7bff9e"))
+	pip_cash_lbl.text = "CASH"
+	pip_cash_lbl.position = Vector2(102, 184)
+	pip_cash_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui_root.add_child(pip_cash_lbl)
 	for i in range(4):
 		var pip := ColorRect.new()
-		pip.position = Vector2(76 + i * 18, 146)
-		pip.size = Vector2(14, 14)
+		pip.position = Vector2(150 + i * 20, 188)
+		pip.size = Vector2(14, 12)
 		pip.color = Color("55d66b")
 		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		ui_root.add_child(pip)
 		cash_pips.append(pip)
+	var pip_dis_lbl := Label.new()
+	UiTheme.style_body(pip_dis_lbl, 15, Color("5aa9ff"))
+	pip_dis_lbl.text = "BUANG"
+	pip_dis_lbl.position = Vector2(242, 184)
+	pip_dis_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui_root.add_child(pip_dis_lbl)
 	for i in range(3):
 		var pip := ColorRect.new()
-		pip.position = Vector2(166 + i * 18, 146)
-		pip.size = Vector2(14, 14)
+		pip.position = Vector2(300 + i * 20, 188)
+		pip.size = Vector2(14, 12)
 		pip.color = Color("4aa3ff")
 		pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		ui_root.add_child(pip)
 		discard_pips.append(pip)
-		var pip2 := ColorRect.new()
-		pip2.position = Vector2(24 + 4 * 18 + 14 + i * 18, 146)
-		pip2.size = Vector2(14, 14)
-		pip2.color = Color("5aa9ff")
-		pip2.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		ui_root.add_child(pip2)
-		discard_pips.append(pip2)
 
 	help_label = Label.new()
-	UiTheme.style_body(help_label, 15, Color(1, 1, 1, 0.8))
+	UiTheme.style_body(help_label, 18, Color(1, 1, 1, 0.92))
 	help_label.text = "Jab: J | Dash: K/Spasi | Tahan Tab + 1-6 pilih | E cash-in | R buang"
 	help_label.position = Vector2(24, 640)
 	ui_root.add_child(help_label)
 
 	mode_label = Label.new()
-	mode_label.position = Vector2(24, 166)
-	UiTheme.style_title(mode_label, 18, Color("ffe066"))
+	mode_label.position = Vector2(102, 214)
+	mode_label.size = Vector2(300, 30)
+	UiTheme.style_title(mode_label, 19, Color("ffe066"))
 	mode_label.text = "MODE PILIH KARTU (gerak tetap jalan)"
 	mode_label.visible = false
 	ui_root.add_child(mode_label)
@@ -353,9 +374,15 @@ func _build_menu() -> void:
 	menu_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	menu_dim.visible = false
 	ui_root.add_child(menu_dim)
+	menu_frame = Panel.new()
+	menu_frame.add_theme_stylebox_override("panel",
+		UiTheme.panel_framed(Color("0d0a18f2"), Color("ff5fd2"), 3, 20))
+	menu_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	menu_frame.visible = false
+	ui_root.add_child(menu_frame)
 	menu_title = Label.new()
 	menu_title.text = "BEAT'EM FOLD"
-	UiTheme.style_title(menu_title, 76, Color("ff5fd2"))
+	UiTheme.style_title(menu_title, 88, Color("ff7be0"))
 	menu_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	menu_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	menu_title.visible = false
@@ -479,7 +506,7 @@ func _build_menu() -> void:
 
 
 func _menu_nodes() -> Array:
-	return [menu_dim, menu_title, menu_sub, menu_best, menu_mulai,
+	return [menu_dim, menu_frame, menu_title, menu_sub, menu_best, menu_mulai,
 		menu_keluar, menu_div, menu_ver, menu_hint]
 
 
@@ -587,9 +614,9 @@ func _refresh_counters() -> void:
 	var d := 0
 	if deck != null:
 		d = deck.remaining()
-	deck_label.text = "HAND %d/6 | DECK %d | CASH %d/4 | BUANG %d/3 | $%d | SKOR %d" % [
-		n, d, run_manager.hands_left, run_manager.discards_left, run_manager.money,
-		run_manager.score]
+	deck_label.text = "TANGAN %d/6   DECK %d   $%d   SKOR %d\nCASH %d   BUANG %d" % [
+		n, d, run_manager.money, run_manager.score,
+		run_manager.hands_left, run_manager.discards_left]
 	for i in range(cash_pips.size()):
 		cash_pips[i].color = Color("55d66b") if i < run_manager.hands_left else Color(0, 0, 0, 0.6)
 	for i in range(discard_pips.size()):
@@ -636,6 +663,12 @@ func _layout_overlays() -> void:
 	var vp := get_viewport_rect().size
 	menu_dim.position = Vector2.ZERO
 	menu_dim.size = vp
+	var fw := 600.0
+	var fh := 410.0
+	# Anchor frame di konten (menu pakai posisi y tetap ~96..474), bukan center vertikal,
+	# supaya tetap pas di window aspect apa pun (canvas_items/expand).
+	menu_frame.position = Vector2((vp.x - fw) * 0.5, 96.0)
+	menu_frame.size = Vector2(fw, fh)
 	menu_title.position = Vector2(0, 120)
 	menu_title.size = Vector2(vp.x, 90)
 	menu_div.position = Vector2((vp.x - 320.0) * 0.5, 224)
@@ -1093,7 +1126,7 @@ func _refresh_hud(hp: int, max_hp: int) -> void:
 	player_hp_label.text = "PLAYER HP: %d/%d" % [hp, max_hp]
 	var frac := float(hp) / float(maxi(max_hp, 1))
 	var target_w := 280.0 * frac
-	hp_bar_fill.size = Vector2(target_w, 16)
+	hp_bar_fill.size = Vector2(target_w, 22)
 	if frac < 0.3:
 		hp_bar_fill.color = Color("e04040")
 	elif frac < 0.6:

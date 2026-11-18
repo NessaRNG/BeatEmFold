@@ -4,9 +4,9 @@ extends Control
 ## Layout RECT EKSPLISIT dari viewport (tanpa anchor): anchor butuh parent
 ## Control ber-size nyata, yang tidak ada saat UI di bawah Node2D/CanvasLayer.
 
-const SLOT_W := 64.0
-const SLOT_H := 90.0
-const SLOT_GAP := 8.0
+const SLOT_W := 78.0
+const SLOT_H := 108.0
+const SLOT_GAP := 10.0
 
 var slot_panels: Array[Panel] = []
 var slot_faces: Array[TextureRect] = []
@@ -27,12 +27,14 @@ var slot_tweens: Array[Tween] = []
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	sb_full = UiTheme.panel_style(Color(0.05, 0.05, 0.09, 0.85), Color("3a3a55"), 1)
-	sb_empty = UiTheme.panel_style(Color(0.04, 0.04, 0.07, 0.6), Color("23232e"), 1)
-	sb_selected = UiTheme.panel_style(Color(0.16, 0.13, 0.05, 0.92), Color("ffd94d"), 2)
+	sb_full = UiTheme.panel_framed(Color("0f0e18"), Color("6b5a8e"), 2, 9)
+	sb_empty = UiTheme.panel_style(Color("0a0a12cc"), Color("26263a"), 2, 9)
+	sb_selected = UiTheme.panel_framed(Color("241c08"), Color("ffd94d"), 3, 10)
+	sb_selected.shadow_color = Color("ffd94d88")
+	sb_selected.shadow_size = 8
 
 	best_label = Label.new()
-	UiTheme.style_title(best_label, 22)
+	UiTheme.style_title(best_label, 26, Color("7bff9e"))
 	best_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	best_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	best_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -48,25 +50,37 @@ func _ready() -> void:
 		panel.add_theme_stylebox_override("panel", sb_empty)
 		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var face := TextureRect.new()
-		face.position = Vector2(4, 6)
+		face.position = Vector2(11, 16)
 		face.size = Vector2(56, 56)
 		face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		face.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		face.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		panel.add_child(face)
+		# Pojok kiri-atas: rank + suit besar, biar kebaca tanpa buka kartu penuh.
+		var corner := Label.new()
+		corner.name = "Corner"
+		corner.position = Vector2(2, 1)
+		corner.size = Vector2(30, 30)
+		corner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		UiTheme.style_title(corner, 20, Color.WHITE)
+		corner.text = ""
+		corner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		panel.add_child(corner)
 		var label := Label.new()
-		label.position = Vector2(0, 62)
+		label.name = "Caption"
+		label.position = Vector2(0, 76)
 		label.size = Vector2(SLOT_W, 26)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		UiTheme.style_body(label, 15, Color(1, 1, 1, 0.3))
+		UiTheme.style_body(label, 17, Color(1, 1, 1, 0.35))
 		label.text = "·"
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		panel.add_child(label)
 		var hint := Label.new()
-		hint.position = Vector2(3, 1)
+		hint.name = "Hint"
+		hint.position = Vector2(SLOT_W - 22, 1)
 		hint.size = Vector2(20, 16)
-		UiTheme.style_body(hint, 12, Color(1, 1, 1, 0.4))
+		UiTheme.style_body(hint, 13, Color(1, 1, 1, 0.5))
 		hint.text = str(i + 1)
 		hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		panel.add_child(hint)
@@ -123,30 +137,40 @@ func _back() -> Texture2D:
 func _refresh_slots() -> void:
 	for i in range(slot_labels.size()):
 		var selected: bool = i < cards_shown.size() and cards_shown[i] in selected_shown
+		var corner: Label = slot_panels[i].get_node("Corner")
 		if i < cards_shown.size():
 			var c: CardData = cards_shown[i]
 			slot_faces[i].texture = _face_for(c)
 			slot_faces[i].modulate = Color.WHITE
 			slot_labels[i].text = c.short()
+			corner.text = "%s%s" % [CardData.rank_label(c.rank), CardData.suit_symbol(c.suit)]
 			if CardData.is_red(c.suit):
-				slot_labels[i].add_theme_color_override("font_color", Color("ff7b7b"))
+				var red := Color("ff7b7b")
+				slot_labels[i].add_theme_color_override("font_color", red)
+				corner.add_theme_color_override("font_color", red)
 			else:
 				slot_labels[i].add_theme_color_override("font_color", Color("f2f2f2"))
+				corner.add_theme_color_override("font_color", Color("dfe8ff"))
 			if selected:
 				slot_panels[i].add_theme_stylebox_override("panel", sb_selected)
 			else:
 				slot_panels[i].add_theme_stylebox_override("panel", sb_full)
-			var target_y := -14.0 if selected else 0.0
+			var target_y := -18.0 if selected else 0.0
+			var target_scale := 1.07 if selected else 1.0
+			slot_panels[i].pivot_offset = Vector2(SLOT_W * 0.5, SLOT_H)
 			var tween := slot_panels[i].create_tween()
-			tween.tween_property(slot_panels[i], "position:y", target_y, 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			tween.tween_property(slot_panels[i], "position:y", target_y, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			tween.parallel().tween_property(slot_panels[i], "scale", Vector2(target_scale, target_scale), 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		else:
+			corner.text = ""
 			slot_faces[i].texture = _back()
 			slot_faces[i].modulate = Color(1, 1, 1, 0.3)
 			slot_labels[i].text = "·"
+			var tween := slot_panels[i].create_tween()
+			tween.tween_property(slot_panels[i], "scale", Vector2.ONE, 0.16)
 			slot_labels[i].add_theme_color_override("font_color", Color(1, 1, 1, 0.3))
 			slot_panels[i].add_theme_stylebox_override("panel", sb_empty)
-			var tween := slot_panels[i].create_tween()
-			tween.tween_property(slot_panels[i], "position:y", 0.0, 0.15)
+			slot_panels[i].position.y = 0.0
 
 
 func set_best_hand(hand_name: String, _hand_type: int) -> void:

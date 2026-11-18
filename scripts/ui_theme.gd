@@ -24,7 +24,7 @@ static func build() -> Theme:
 		return _theme
 	var th := Theme.new()
 	th.default_font = font_mini()
-	th.default_font_size = 18
+	th.default_font_size = 20
 	# --- Button ---
 	var normal := _btn(Color("1c1626f2"), Color("6b5a8e"))
 	var hover := _btn(Color("2a2138f2"), Color("ff5fd2"))
@@ -40,10 +40,10 @@ static func build() -> Theme:
 	th.set_color("font_pressed_color", "Button", Color("ffd94d"))
 	th.set_color("font_disabled_color", "Button", Color("555560"))
 	th.set_font("font", "Button", font_px())
-	th.set_font_size("font_size", "Button", 16)
+	th.set_font_size("font_size", "Button", 19)
 	# --- Label: outline agar kebaca di atas laga ---
-	th.set_color("font_outline_color", "Label", Color("0a0a12"))
-	th.set_constant("outline_size", "Label", 5)
+	th.set_color("font_outline_color", "Label", Color("080810"))
+	th.set_constant("outline_size", "Label", 6)
 	_theme = th
 	return th
 
@@ -71,13 +71,27 @@ static func panel_style(bg: Color, border: Color, bw: int = 1, radius: int = 7) 
 	return s
 
 
+## Panel.frame lebih tebal + inner shadow tipis + margin, untuk panel HUD/menu/shop.
+static func panel_framed(bg: Color, border: Color, bw: int = 2, radius: int = 12) -> StyleBoxFlat:
+	var s := panel_style(bg, border, bw, radius)
+	s.set_border_width_all(bw)
+	s.shadow_color = Color(0, 0, 0, 0.45)
+	s.shadow_size = 6
+	s.shadow_offset = Vector2(0, 3)
+	s.content_margin_left = 12.0
+	s.content_margin_right = 12.0
+	s.content_margin_top = 8.0
+	s.content_margin_bottom = 8.0
+	return s
+
+
 ## Label judul pixel + outline.
 static func style_title(lb: Label, size: int, color: Color = Color.WHITE) -> void:
 	lb.add_theme_font_override("font", font_px())
 	lb.add_theme_font_size_override("font_size", size)
 	lb.add_theme_color_override("font_color", color)
-	lb.add_theme_color_override("font_outline_color", Color("0a0a12"))
-	lb.add_theme_constant_override("outline_size", maxi(int(size / 4.0), 4))
+	lb.add_theme_color_override("font_outline_color", Color("080810"))
+	lb.add_theme_constant_override("outline_size", maxi(int(size / 4.0), 5))
 
 
 ## Label body mini + outline tipis.

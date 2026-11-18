@@ -8,9 +8,9 @@ signal shop_closed
 const ADD_CARD_PRICE := 3
 const REMOVE_CARD_PRICE := 3
 
-const CARD_W := 190.0
-const CARD_H := 360.0
-const CARD_GAP := 16.0
+const CARD_W := 210.0
+const CARD_H := 290.0
+const CARD_GAP := 20.0
 
 var run: RunManager
 var deck: Deck
@@ -154,7 +154,7 @@ func _build_powerup_panel() -> void:
 
 func _layout_powerups() -> void:
 	var vp := get_viewport_rect().size
-	var y := 520.0
+	var y := 512.0
 	if powerup_title != null:
 		powerup_title.position = Vector2(0, y)
 		powerup_title.size = Vector2(vp.x, 30)
@@ -263,6 +263,12 @@ func _add_card(idx: int, icon_path: String, icolor: Color, title: String, desc: 
 	var btn := Button.new()
 	btn.text = ""
 	btn.disabled = disabled
+	btn.add_theme_stylebox_override("normal",
+		UiTheme.panel_framed(Color("141126f2"), icolor, 2, 12))
+	btn.add_theme_stylebox_override("hover",
+		UiTheme.panel_framed(Color("201a30f5"), Color.WHITE, 3, 12))
+	btn.add_theme_stylebox_override("pressed",
+		UiTheme.panel_framed(Color("2a2240"), Color("ffd94d"), 3, 12))
 	add_child(btn)
 	var icon := Panel.new()
 	icon.add_theme_stylebox_override("panel",
@@ -288,7 +294,7 @@ func _add_card(idx: int, icon_path: String, icolor: Color, title: String, desc: 
 	btn.add_child(key)
 	var name_lb := Label.new()
 	name_lb.text = title
-	UiTheme.style_title(name_lb, 17, Color.WHITE)
+	UiTheme.style_title(name_lb, 20, Color.WHITE)
 	name_lb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lb.position = Vector2(8, 80)
 	name_lb.size = Vector2(CARD_W - 16, 28)
@@ -296,7 +302,7 @@ func _add_card(idx: int, icon_path: String, icolor: Color, title: String, desc: 
 	btn.add_child(name_lb)
 	var desc_lb := Label.new()
 	desc_lb.text = _split_desc(desc)
-	UiTheme.style_body(desc_lb, 15, Color(1, 1, 1, 0.8))
+	UiTheme.style_body(desc_lb, 17, Color(1, 1, 1, 0.9))
 	desc_lb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	desc_lb.position = Vector2(8, 112)
 	desc_lb.size = Vector2(CARD_W - 16, 120)
